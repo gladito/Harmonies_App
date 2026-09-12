@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="'Harmony | ' + ${post.title}">Harmony | Post</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: radial-gradient(circle at top right, #6366f1 0%, #0f172a 55%, #020617 100%);
+            color: #e2e8f0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            padding: 40px 16px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 960px;
+            display: grid;
+            gap: 24px;
+            grid-template-columns: 2fr 1fr;
+        }
+
+        .post-card,
+        .comments-card {
+            background: rgba(15, 23, 42, 0.88);
+            border-radius: 24px;
+            padding: 32px;
+            border: 1px solid rgba(148, 163, 184, 0.15);
+            box-shadow: 0 25px 60px rgba(15, 23, 42, 0.55);
+        }
+
+        h1 {
+            margin-top: 0;
+            font-size: 32px;
+        }
+
+        .meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: rgba(148, 163, 184, 0.85);
+            margin-top: 12px;
+        }
+
+        .audio-preview {
+            margin: 24px 0;
+            padding: 20px;
+            background: rgba(30, 41, 59, 0.8);
+            border-radius: 18px;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+        }
+
+        .description {
+            line-height: 1.6;
+            color: rgba(226, 232, 240, 0.85);
+        }
+
+        .comment-item {
+            background: rgba(30, 41, 59, 0.75);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 16px;
+            border: 1px solid rgba(148, 163, 184, 0.12);
+        }
+
+        .comment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            color: rgba(148, 163, 184, 0.9);
+        }
+
+        .comment-content {
+            margin-top: 8px;
+            color: rgba(226, 232, 240, 0.85);
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 12px 14px;
+            border-radius: 12px;
+            border: 1px solid rgba(148, 163, 184, 0.25);
+            background: rgba(15, 23, 42, 0.65);
+            color: #e2e8f0;
+            font-size: 15px;
+            resize: vertical;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: rgba(99, 102, 241, 0.6);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.25);
+        }
+
+        button[type="submit"] {
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #22d3ee, #6366f1);
+            color: #020617;
+            font-weight: 700;
+            font-size: 15px;
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button[type="submit"]:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 18px 36px rgba(99, 102, 241, 0.35);
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+
+        .alert.success {
+            background: rgba(74, 222, 128, 0.18);
+            border: 1px solid rgba(74, 222, 128, 0.35);
+            color: #bbf7d0;
+        }
+
+        .alert.error {
+            background: rgba(248, 113, 113, 0.18);
+            border: 1px solid rgba(248, 113, 113, 0.3);
+            color: #fecaca;
+        }
+
+        .back-link {
+            text-decoration: none;
+            color: #93c5fd;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 24px;
+        }
+
+        @media (max-width: 960px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+<a th:href="@{/home}" class="back-link">← Volver al inicio</a>
+<div style="max-width:960px;width:100%;margin-bottom:16px;">
+    <div th:if="${postSuccess}" class="alert success" th:text="${postSuccess}" style="margin:0 0 12px 0;">Actualización exitosa.</div>
+    <div th:if="${postError}" class="alert error" th:text="${postError}" style="margin:0 0 12px 0;">Error</div>
+</div>
+<div class="container">
+    <article class="post-card">
+        <h1 th:text="${post.title}">Título del post</h1>
+        <div class="meta">
+            <span th:text="'Por ' + ${post.authorUsername}">Por autor</span>
+            <span th:text="${#temporals.format(post.createdAt, 'dd MMM yyyy HH:mm')}">10 Nov 2025 18:00</span>
+        </div>
+        <div th:if="${isOwner}" style="margin-top:18px; display:flex; gap:12px;">
+            <a th:href="@{|/posts/${post.id}/edit|}" class="back-link" style="margin:0; padding:8px 16px; background:rgba(99,102,241,0.2); border-radius:999px;">Editar publicación</a>
+            <form th:action="@{|/posts/${post.id}/delete|}" method="post" onsubmit="return confirm('¿Estás seguro de eliminar esta publicación?');">
+                <button type="submit" style="border:none;padding:8px 16px;border-radius:999px;background:rgba(248,113,113,0.25);color:#fecaca;font-weight:600;cursor:pointer;">
+                    Eliminar publicación
+                </button>
+            </form>
+        </div>
+        <div class="audio-preview">
+            <strong>Escucha la demo:</strong>
+            <p th:text="${post.audioUrl}">https://...</p>
+            <p th:if="${post.durationInSeconds != null}"
+               th:text="'Duración: ' + ${post.durationInSeconds} + ' segundos'">Duración: 180 segundos</p>
+        </div>
+        <div class="description" th:text="${post.description != null ? post.description : 'Sin descripción.'}">
+            Descripción del post.
+        </div>
+    </article>
+
+    <section class="comments-card">
+        <h2>Comentarios</h2>
+
+        <div th:if="${commentSuccess}" class="alert success" th:text="${commentSuccess}">Comentario publicado.</div>
+        <div th:if="${commentError}" class="alert error" th:text="${commentError}">Error</div>
+
+        <div th:if="${post.comments != null and !post.comments.isEmpty()}">
+            <div th:each="comment : ${post.comments}" class="comment-item">
+                <div class="comment-header">
+                    <span th:text="${comment.author.username}">Usuario</span>
+                    <span th:text="${#temporals.format(comment.createdAt, 'dd MMM yyyy HH:mm')}">Hace 2h</span>
+                </div>
+                <div class="comment-content" th:text="${comment.content}">
+                    Este riff está buenísimo, probá subir un poco el hi-hat.
+                </div>
+                <form th:if="${isOwner}" th:action="@{|/posts/${post.id}/comments/${comment.id}/delete|}" method="post"
+                      style="margin-top:10px;text-align:right;">
+                    <button type="submit" style="border:none;background:rgba(248,113,113,0.2);color:#fecaca;padding:6px 12px;border-radius:999px;font-weight:600;cursor:pointer;">
+                        Eliminar comentario
+                    </button>
+                </form>
+            </div>
+        </div>
+        <div th:if="${post.comments == null or post.comments.isEmpty()}" class="comment-item" style="text-align:center;">
+            Aún no hay comentarios. Sé el primero en dar feedback.
+        </div>
+
+        <form th:action="@{|/posts/${post.id}/comments|}" th:object="${commentForm}" method="post">
+            <label for="content">Agregar comentario</label>
+            <textarea id="content" th:field="*{content}" maxlength="280" placeholder="Deja feedback constructivo (máx. 280 caracteres)." required></textarea>
+            <button type="submit">Comentar</button>
+        </form>
+    </section>
+</div>
+</body>
+</html>
+

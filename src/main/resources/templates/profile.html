@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Harmony | Mi perfil</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: radial-gradient(circle at top, #22d3ee 0%, #0f172a 55%, #020617 100%);
+            color: #e2e8f0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 16px;
+        }
+
+        .card {
+            width: 100%;
+            max-width: 600px;
+            background: rgba(15, 23, 42, 0.9);
+            border-radius: 24px;
+            padding: 36px;
+            border: 1px solid rgba(148, 163, 184, 0.18);
+            box-shadow: 0 30px 60px rgba(15, 23, 42, 0.6);
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .card h1 {
+            margin: 0;
+            font-size: 30px;
+        }
+
+        .section {
+            background: rgba(15, 23, 42, 0.65);
+            border-radius: 18px;
+            padding: 24px;
+            border: 1px solid rgba(148, 163, 184, 0.12);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        label {
+            font-weight: 600;
+            color: rgba(226, 232, 240, 0.85);
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 12px;
+            border: 1px solid rgba(148, 163, 184, 0.25);
+            background: rgba(15, 23, 42, 0.65);
+            color: #e2e8f0;
+            font-size: 15px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: rgba(99, 102, 241, 0.6);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.25);
+        }
+
+        button {
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #6366f1, #22d3ee);
+            color: #020617;
+            font-weight: 700;
+            font-size: 16px;
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 18px 36px rgba(99, 102, 241, 0.35);
+        }
+
+        .alerts {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 14px;
+        }
+
+        .alert.success {
+            background: rgba(22, 163, 74, 0.2);
+            color: #bbf7d0;
+            border: 1px solid rgba(22, 163, 74, 0.35);
+        }
+
+        .alert.error {
+            background: rgba(248, 113, 113, 0.18);
+            color: #fecaca;
+            border: 1px solid rgba(248, 113, 113, 0.3);
+        }
+
+        .back-link {
+            text-decoration: none;
+            color: #93c5fd;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+    </style>
+</head>
+<body>
+<div class="card">
+    <a th:href="@{/home}" class="back-link">← Volver al inicio</a>
+    <h1>Mi perfil</h1>
+    <div class="alerts">
+        <div th:if="${profileSuccess}" class="alert success" th:text="${profileSuccess}">Nombre actualizado.</div>
+        <div th:if="${profileError}" class="alert error" th:text="${profileError}">Error</div>
+        <div th:if="${passwordSuccess}" class="alert success" th:text="${passwordSuccess}">Contraseña actualizada.</div>
+        <div th:if="${passwordError}" class="alert error" th:text="${passwordError}">Error</div>
+    </div>
+
+    <section class="section">
+        <h2 style="margin:0;">Actualizar nombre de usuario</h2>
+        <form th:action="@{/profile/username}" th:object="${profileForm}" method="post">
+            <label for="username">Nombre de usuario</label>
+            <input id="username" type="text" th:field="*{username}" th:value="${session.username}" placeholder="Nuevo nickname" required>
+            <button type="submit">Guardar cambios</button>
+        </form>
+    </section>
+
+    <section class="section">
+        <h2 style="margin:0;">Cambiar contraseña</h2>
+        <form th:action="@{/profile/password}" th:object="${passwordForm}" method="post">
+            <label for="currentPassword">Contraseña actual</label>
+            <input id="currentPassword" type="password" th:field="*{currentPassword}" placeholder="********" required>
+
+            <label for="newPassword">Nueva contraseña</label>
+            <input id="newPassword" type="password" th:field="*{newPassword}" placeholder="Debe incluir mayúsculas y números" required>
+
+            <button type="submit">Actualizar contraseña</button>
+        </form>
+    </section>
+</div>
+</body>
+</html>
+
+

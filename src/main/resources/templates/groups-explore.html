@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Harmony | Explorar bandas</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: radial-gradient(circle at top left, #22d3ee 0%, #0f172a 55%, #020617 100%);
+            color: #e2e8f0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 22px 48px;
+            background: rgba(2, 6, 23, 0.75);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 26px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 16px;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #e2e8f0;
+            padding: 10px 18px;
+            border-radius: 999px;
+            background: rgba(148, 163, 184, 0.2);
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .nav-links a:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px rgba(148, 163, 184, 0.25);
+        }
+
+        main {
+            flex: 1;
+            padding: 40px 56px 72px;
+        }
+
+        .headline {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .headline h2 {
+            margin: 0;
+            font-size: 32px;
+        }
+
+        .grid {
+            display: grid;
+            gap: 24px;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        }
+
+        .card {
+            background: rgba(15, 23, 42, 0.85);
+            border-radius: 20px;
+            padding: 24px;
+            border: 1px solid rgba(148, 163, 184, 0.12);
+            box-shadow: 0 25px 55px rgba(15, 23, 42, 0.5);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .card h3 {
+            margin: 0;
+            font-size: 22px;
+        }
+
+        .card p {
+            margin: 0;
+            color: rgba(226, 232, 240, 0.8);
+            line-height: 1.5;
+        }
+
+        .meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: rgba(148, 163, 184, 0.85);
+            font-size: 13px;
+        }
+
+        form button {
+            margin-top: 8px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #6366f1, #22d3ee);
+            color: #020617;
+            font-weight: 700;
+            font-size: 15px;
+            padding: 10px 18px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        form button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(99, 102, 241, 0.35);
+        }
+
+        .empty-state {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 32px;
+            background: rgba(15, 23, 42, 0.65);
+            border: 1px dashed rgba(148, 163, 184, 0.4);
+            border-radius: 24px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <h1 th:text="'Explorar bandas (' + ${username} + ')'">Explorar bandas</h1>
+    <div class="nav-links">
+        <a th:href="@{/groups}">Mis bandas</a>
+        <a th:href="@{/home}">Inicio</a>
+    </div>
+</header>
+<main>
+    <div class="headline">
+        <h2>Únete a un nuevo proyecto</h2>
+        <div class="nav-links" style="gap:12px;">
+            <span th:if="${createSuccess}" th:text="${createSuccess}" style="background: rgba(22, 163, 74, 0.2); color: #bbf7d0; border: 1px solid rgba(22, 163, 74, 0.4); padding: 10px 18px; border-radius: 999px;">Solicitud enviada</span>
+            <span th:if="${createError}" th:text="${createError}" style="background: rgba(248, 113, 113, 0.18); color: #fecaca; border: 1px solid rgba(248, 113, 113, 0.35); padding: 10px 18px; border-radius: 999px;">Error</span>
+        </div>
+    </div>
+
+    <div th:if="${hasAvailable}" class="grid">
+        <div th:each="group : ${availableGroups}" class="card">
+            <div class="meta">
+                <span th:text="'Integrantes: ' + ${group.memberCount}">Integrantes: 1</span>
+            </div>
+            <h3 th:text="${group.name}">Nombre de la banda</h3>
+            <p th:text="${group.description != null ? group.description : 'Sin descripción por ahora.'}">
+                Sin descripción por ahora.
+            </p>
+            <form th:action="@{|/groups/${group.id}/request|}" method="post">
+                <label for="message" style="display:block;font-weight:600;color:#cbd5f5;margin-bottom:6px;">Mensaje para el líder</label>
+                <textarea name="message" rows="3" placeholder="Cuenta brevemente por qué quieres unirte (opcional)" style="width:100%;padding:12px;border-radius:12px;border:1px solid rgba(148,163,184,0.2);background:rgba(15,23,42,0.65);color:#e2e8f0;"></textarea>
+                <button type="submit">Enviar solicitud</button>
+            </form>
+        </div>
+    </div>
+
+    <div th:if="${!hasAvailable}" class="empty-state">
+        <h3>Ya formas parte de todas las bandas disponibles</h3>
+        <p>Crea una nueva banda o espera a que la comunidad abra más proyectos.</p>
+    </div>
+</main>
+</body>
+</html>
+
