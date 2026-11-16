@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es" th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="#{studios.pageTitle}">Harmony · Salas</title>
+    <link rel="stylesheet" th:href="@{/css/harmony.css}">
+</head>
+<body>
+<nav th:replace="~{fragments :: nav}"></nav>
+<main>
+    <div class="notice" role="status" th:if="${message}" th:text="${message}"></div>
+    <div class="notice" role="status" th:if="${cancelled}" th:text="#{studios.cancelled}">Reserva cancelada.</div>
+
+    <section class="card hero">
+        <span class="eyebrow" th:text="#{studios.eyebrow}">Salas y estudios</span>
+        <h1 th:text="#{studios.title}">Encontrá dónde sonar.</h1>
+        <p class="muted" th:text="#{studios.intro}">Salas de ensayo, estudios de grabación y cabinas publicadas por la comunidad.</p>
+    </section>
+
+    <div class="layout">
+        <section>
+            <div class="actions filter-bar">
+                <a class="pill" th:href="@{/studios}" th:classappend="${type == null} ? 'active'" th:text="#{common.all}">Todas</a>
+                <a class="pill" th:each="t : ${types}" th:href="@{/studios(type=${t})}"
+                   th:classappend="${type == t} ? 'active'" th:text="#{${'studio.type.' + t}}"></a>
+            </div>
+
+            <div class="card" th:if="${#lists.isEmpty(studios)}" th:text="#{studios.empty}">Todavía no hay salas publicadas en esta categoría.</div>
+
+            <div class="grid-cards">
+                <article class="card listing" th:each="s : ${studios}">
+                    <div class="cover" th:classappend="|cover-${#strings.toLowerCase(s.type)}|" aria-hidden="true"></div>
+                    <span class="pill" th:text="#{${'studio.type.' + s.type}}"></span>
+                    <h2><a th:href="@{|/studios/${s.id}|}" th:text="${s.name}"></a></h2>
+                    <p class="muted" th:text="${s.location}"></p>
+                    <p class="small" th:if="${s.amenities}" th:text="${s.amenities}"></p>
+                    <div class="listing-footer">
+                        <span class="price" th:text="#{studio.rate(${#numbers.formatInteger(s.hourlyRate,1,'POINT')})}"></span>
+                        <a class="btn" th:href="@{|/studios/${s.id}|}" th:text="#{studios.view}">Ver y reservar</a>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <aside>
+            <div class="card">
+                <h2 th:text="#{studios.myBookings}">Mis reservas</h2>
+                <p class="muted" th:if="${#lists.isEmpty(bookings)}" th:text="#{studios.noBookings}">Todavía no reservaste ninguna sala.</p>
+                <div class="member" th:each="b : ${bookings}">
+                    <a th:href="@{|/studios/${b.studio.id}|}" th:text="${b.studio.name}"></a>
+                    <p class="small">
+                        <span th:text="${#temporals.format(b.startAt,'dd/MM/yyyy HH:mm')}"></span> ·
+                        <span th:text="#{booking.hours(${b.hours})}"></span> ·
+                        <span class="status" th:classappend="|status-${#strings.toLowerCase(b.status)}|" th:text="#{${'booking.status.' + b.status}}"></span>
+                    </p>
+                    <form th:if="${b.upcoming}" th:action="@{|/studios/bookings/${b.id}/cancel|}" method="post" th:attr="data-confirm=#{booking.confirmCancel}">
+                        <input type="hidden" name="back" value="/studios">
+                        <button th:text="#{booking.cancel}">Cancelar reserva</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card" th:if="${!#lists.isEmpty(owned)}">
+                <h2 th:text="#{studios.owned}">Tus salas</h2>
+                <p th:each="s : ${owned}"><a th:href="@{|/studios/${s.id}|}" th:text="${s.name}"></a></p>
+            </div>
+
+            <div class="card">
+                <details>
+                    <summary th:text="#{studios.publish}">Publicar una sala</summary>
+                    <form th:action="@{/studios}" method="post">
+                        <label for="name" th:text="#{studios.form.name}">Nombre</label>
+                        <input id="name" name="name" required maxlength="80">
+                        <label for="type" th:text="#{studios.form.type}">Tipo de espacio</label>
+                        <select id="type" name="type" required>
+                            <option th:each="t : ${types}" th:value="${t}" th:text="#{${'studio.type.' + t}}"></option>
+                        </select>
+                        <label for="location" th:text="#{studios.form.location}">Ubicación</label>
+                        <input id="location" name="location" required maxlength="120">
+                        <label for="hourlyRate" th:text="#{studios.form.rate}">Precio por hora ($)</label>
+                        <input id="hourlyRate" name="hourlyRate" type="number" min="1" max="1000000" required>
+                        <label for="amenities" th:text="#{studios.form.amenities}">Equipamiento</label>
+                        <input id="amenities" name="amenities" maxlength="255">
+                        <label for="description" th:text="#{studios.form.description}">Descripción</label>
+                        <textarea id="description" name="description" maxlength="500"></textarea>
+                        <button th:text="#{studios.form.submit}">Publicar sala</button>
+                    </form>
+                </details>
+            </div>
+        </aside>
+    </div>
+</main>
+<script th:src="@{/js/harmony.js}"></script>
+</body>
+</html>

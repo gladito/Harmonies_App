@@ -4,6 +4,7 @@ public class GroupCreateRequestDto {
 
     private String name;
     private String description;
+    private String avatarUrl;
 
     public String getName() {
         return name;
@@ -19,5 +20,13 @@ public class GroupCreateRequestDto {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getAvatarUrl() {
+        return avatarUrl;
+    }
+
+    public void setAvatarUrl(String avatarUrl) {
+        this.avatarUrl = avatarUrl;
     }
 }

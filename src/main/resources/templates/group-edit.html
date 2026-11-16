@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<html lang="es" th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Harmony | Editar banda</title>
+    <title th:text="#{groups.editTitle}">Harmony | Editar banda</title>
     <style>
         body {
             margin: 0;
@@ -103,25 +103,40 @@
             border: 1px solid rgba(248, 113, 113, 0.35);
         }
     </style>
-</head>
+<style>:root{color-scheme:dark}body{background:#080808!important;color:#f8f8ff!important}h1,h2,h3{color:#d4af37!important}a{color:#d4af37!important}.card,.container,.post-card,.comments-card{border-color:#8b7324!important}button{background:#d4af37!important;color:#080808!important}</style></head>
 <body>
 <div class="card">
-    <h1>Editar banda</h1>
-    <p style="margin:0;color:rgba(226,232,240,0.75);">Actualiza el nombre y la descripción de tu banda.</p>
+    <h1 th:text="#{groups.editHeading}">Editar banda</h1>
+    <p style="margin:0;color:rgba(226,232,240,0.75);" th:text="#{groups.editSubtitle}">Actualiza el nombre y la descripción de tu banda.</p>
 
     <div th:if="${createError}" class="alert" th:text="${createError}">Error</div>
 
-    <form th:action="@{|/groups/${groupId}/edit|}" th:object="${groupForm}" method="post">
-        <label for="name">Nombre de la banda</label>
+    <form th:action="@{|/groups/${groupId}/edit|}" th:object="${groupForm}" method="post" enctype="multipart/form-data">
+        <div th:if="${!#strings.isEmpty(groupForm.avatarUrl)}" style="display:flex;align-items:center;gap:14px;">
+            <img th:src="${groupForm.avatarUrl}" alt="Avatar" style="width:68px;height:68px;border-radius:50%;object-fit:cover;border:2px solid #d4af37;">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                <input type="checkbox" name="removeAvatar" value="true">
+                <span th:text="#{band.avatarRemove}">Quitar foto de la banda</span>
+            </label>
+        </div>
+
+        <label for="name" th:text="#{groups.nameLabel}">Nombre de la banda</label>
         <input id="name" type="text" th:field="*{name}" placeholder="Nombre de la banda" required>
 
-        <label for="description">Descripción</label>
+        <label for="description" th:text="#{band.description}">Descripción</label>
         <textarea id="description" th:field="*{description}" maxlength="255"
                   placeholder="Describe el estilo o metas de tu banda."></textarea>
 
+        <label for="avatarFile" th:text="#{band.avatarUpload}">Subir foto de la banda (PNG, JPG, WEBP, GIF)</label>
+        <input id="avatarFile" type="file" name="avatarFile" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
+               style="width:100%;padding:10px;border-radius:12px;border:1px dashed rgba(212,175,55,0.45);background:rgba(15,23,42,0.65);color:#e2e8f0;">
+
+        <label for="avatarUrl" th:text="#{band.avatarUrl}">O enlace de imagen (https://...)</label>
+        <input id="avatarUrl" type="text" th:field="*{avatarUrl}" maxlength="255" placeholder="https://...">
+
         <div class="actions">
-            <a th:href="@{/groups}">Cancelar</a>
-            <button type="submit">Guardar cambios</button>
+            <a th:href="@{/groups}" th:text="#{common.cancel}">Cancelar</a>
+            <button type="submit" th:text="#{common.saveChanges}">Guardar cambios</button>
         </div>
     </form>
 </div>

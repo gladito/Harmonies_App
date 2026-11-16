@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es" th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="|Harmony · ${job.title}|">Harmony · Aviso</title>
+    <link rel="stylesheet" th:href="@{/css/harmony.css}">
+</head>
+<body>
+<nav th:replace="~{fragments :: nav}"></nav>
+<main>
+    <div class="notice" role="status" th:if="${message}" th:text="${message}"></div>
+    <div class="notice" role="status" th:if="${success}" th:text="#{jobs.published}">Aviso publicado.</div>
+    <div class="notice" role="status" th:if="${applied}" th:text="#{application.sent}">¡Postulación enviada!</div>
+
+    <p><a th:href="@{/jobs}" th:text="#{jobs.back}">← Volver a la bolsa de trabajo</a></p>
+
+    <section class="card hero">
+        <div class="actions">
+            <span class="pill" th:text="#{${'job.type.' + job.type}}"></span>
+            <span class="pill" th:if="${job.instrument}" th:text="${job.instrument}"></span>
+            <span class="pill" th:if="${job.remote}" th:text="#{job.remote}">Remoto</span>
+            <span class="status" th:classappend="${job.open} ? 'status-confirmed' : 'status-cancelled'" th:text="${job.open} ? #{job.open} : #{job.closed}"></span>
+        </div>
+        <h1 th:text="${job.title}"></h1>
+        <p class="price big" th:text="${job.pay}"></p>
+        <p class="muted" th:text="${job.location}"></p>
+        <p class="small">
+            <span th:text="#{job.publishedBy}">Publicado por</span>
+            <a th:href="@{|/people/${job.author.id}|}" th:text="${job.author.username}"></a> ·
+            <span th:text="${#temporals.format(job.createdAt,'dd/MM/yyyy')}"></span>
+        </p>
+    </section>
+
+    <div class="layout">
+        <section>
+            <div class="card" th:if="${job.description}"><p class="prewrap" th:text="${job.description}"></p></div>
+
+            <div class="card" th:if="${isAuthor}">
+                <h2 th:text="#{application.received}">Postulaciones recibidas</h2>
+                <p class="muted" th:if="${#lists.isEmpty(applications)}" th:text="#{application.none}">Todavía nadie se postuló.</p>
+                <div class="member" th:each="a : ${applications}">
+                    <a th:href="@{|/people/${a.applicant.id}|}" th:text="${a.applicant.username}"></a>
+                    <span class="status" th:classappend="|status-${#strings.toLowerCase(a.status)}|" th:text="#{${'application.status.' + a.status}}"></span>
+                    <p class="small" th:text="${a.message} ?: #{application.noMessage}"></p>
+                    <div class="actions" th:if="${a.status.name() == 'PENDING'}">
+                        <form th:action="@{|/jobs/${job.id}/applications/${a.id}|}" method="post">
+                            <input type="hidden" name="accept" value="true"><button th:text="#{application.accept}">Aceptar</button>
+                        </form>
+                        <form th:action="@{|/jobs/${job.id}/applications/${a.id}|}" method="post">
+                            <input type="hidden" name="accept" value="false"><button th:text="#{application.reject}">Rechazar</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <aside>
+            <div class="card" th:if="${!isAuthor and mine == null and job.open}">
+                <h2 th:text="#{application.title}">Postularme</h2>
+                <form th:action="@{|/jobs/${job.id}/apply|}" method="post">
+                    <label for="message" th:text="#{application.message}">Mensaje para quien publicó</label>
+                    <textarea id="message" name="message" maxlength="500" th:placeholder="#{application.placeholder}"></textarea>
+                    <button th:text="#{application.submit}">Enviar postulación</button>
+                </form>
+            </div>
+
+            <div class="card" th:if="${mine != null}">
+                <h2 th:text="#{application.yours}">Tu postulación</h2>
+                <span class="status" th:classappend="|status-${#strings.toLowerCase(mine.status)}|" th:text="#{${'application.status.' + mine.status}}"></span>
+                <p class="small" th:text="${mine.message} ?: #{application.noMessage}"></p>
+            </div>
+
+            <div class="card" th:if="${isAuthor}">
+                <h2 th:text="#{job.manage}">Administrar aviso</h2>
+                <form th:action="@{|/jobs/${job.id}/open|}" method="post">
+                    <input type="hidden" name="open" th:value="${!job.open}">
+                    <button th:text="${job.open} ? #{job.close} : #{job.reopen}"></button>
+                </form>
+            </div>
+        </aside>
+    </div>
+</main>
+</body>
+</html>

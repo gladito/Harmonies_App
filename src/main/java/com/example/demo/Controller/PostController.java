@@ -127,7 +127,7 @@ public class PostController {
         if (session.getAttribute("userId") == null) {
             return "redirect:/login";
         }
-        return postService.getPostDetail(postId)
+        return postService.getPostDetail(postId, (Long) session.getAttribute("userId"))
                 .map(detail -> {
                     model.addAttribute("post", detail);
                     if (!model.containsAttribute("commentForm")) {

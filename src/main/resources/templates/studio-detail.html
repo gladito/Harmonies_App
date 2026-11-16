@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es" th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="|Harmony · ${studio.name}|">Harmony · Sala</title>
+    <link rel="stylesheet" th:href="@{/css/harmony.css}">
+</head>
+<body>
+<nav th:replace="~{fragments :: nav}"></nav>
+<main>
+    <div class="notice" role="status" th:if="${message}" th:text="${message}"></div>
+    <div class="notice" role="status" th:if="${success}" th:text="#{studios.published}">Sala publicada.</div>
+    <div class="notice" role="status" th:if="${booked}" th:text="#{booking.done}">¡Reserva confirmada!</div>
+    <div class="notice" role="status" th:if="${cancelled}" th:text="#{studios.cancelled}">Reserva cancelada.</div>
+
+    <p><a th:href="@{/studios}" th:text="#{studios.back}">← Volver a salas</a></p>
+
+    <section class="card hero">
+        <span class="pill" th:text="#{${'studio.type.' + studio.type}}"></span>
+        <h1 th:text="${studio.name}"></h1>
+        <p class="muted" th:text="${studio.location}"></p>
+        <p class="price big" th:text="#{studio.rate(${#numbers.formatInteger(studio.hourlyRate,1,'POINT')})}"></p>
+        <p class="small">
+            <span th:text="#{studio.publishedBy}">Publicada por</span>
+            <a th:href="@{|/people/${studio.owner.id}|}" th:text="${studio.owner.username}"></a>
+        </p>
+    </section>
+
+    <div class="layout">
+        <section>
+            <div class="card" th:if="${studio.description != null or studio.amenities != null}">
+                <p th:if="${studio.description}" th:text="${studio.description}"></p>
+                <h3 th:if="${studio.amenities}" th:text="#{studios.form.amenities}">Equipamiento</h3>
+                <p th:if="${studio.amenities}" th:text="${studio.amenities}"></p>
+            </div>
+
+            <div class="card">
+                <h2 th:text="#{studio.schedule}">Horarios ocupados</h2>
+                <p class="muted" th:if="${#lists.isEmpty(upcoming)}" th:text="#{studio.scheduleEmpty}">No hay reservas próximas: toda la agenda está libre.</p>
+                <div class="member" th:each="b : ${upcoming}">
+                    <strong th:text="${#temporals.format(b.startAt,'EEE dd/MM HH:mm')} + ' – ' + ${#temporals.format(b.endAt,'HH:mm')}"></strong>
+                    <span class="pill" th:if="${b.user.id == me}" th:text="#{booking.yours}">Tu reserva</span>
+                    <p class="small" th:if="${isOwner}">
+                        <a th:href="@{|/people/${b.user.id}|}" th:text="${b.user.username}"></a> ·
+                        <span th:text="#{booking.total(${#numbers.formatInteger(b.totalPrice,1,'POINT')})}"></span>
+                    </p>
+                    <form th:if="${b.upcoming and (isOwner or b.user.id == me)}" th:action="@{|/studios/bookings/${b.id}/cancel|}" method="post" th:attr="data-confirm=#{booking.confirmCancel}">
+                        <input type="hidden" name="back" th:value="|/studios/${studio.id}|">
+                        <button th:text="#{booking.cancel}">Cancelar reserva</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <aside>
+            <div class="card" th:if="${!isOwner}">
+                <h2 th:text="#{booking.title}">Reservar un horario</h2>
+                <form th:action="@{|/studios/${studio.id}/book|}" method="post">
+                    <label for="start" th:text="#{booking.start}">Fecha y hora de inicio</label>
+                    <input id="start" name="start" type="datetime-local" step="3600" required th:value="${minDate}">
+                    <label for="hours" th:text="#{booking.duration}">Duración</label>
+                    <select id="hours" name="hours">
+                        <option th:each="h : ${#numbers.sequence(1, maxHours)}" th:value="${h}" th:selected="${h == 2}"
+                                th:text="#{booking.hoursOption(${h},${#numbers.formatInteger(h * studio.hourlyRate,1,'POINT')})}"></option>
+                    </select>
+                    <button th:text="#{booking.submit}">Confirmar reserva</button>
+                </form>
+                <p class="small muted" th:text="#{booking.noPayments}">Harmony no cobra la reserva: el pago se coordina con la sala.</p>
+            </div>
+
+            <div class="card" th:if="${isOwner}">
+                <h2 th:text="#{studio.manage}">Administrar sala</h2>
+                <p class="muted" th:text="#{studio.manageText}">Ves quién reservó cada horario y podés cancelar reservas.</p>
+                <form th:action="@{|/studios/${studio.id}/delete|}" method="post" th:attr="data-confirm=#{studio.confirmDelete}">
+                    <button th:text="#{studio.delete}">Quitar publicación</button>
+                </form>
+            </div>
+        </aside>
+    </div>
+</main>
+<script th:src="@{/js/harmony.js}"></script>
+</body>
+</html>

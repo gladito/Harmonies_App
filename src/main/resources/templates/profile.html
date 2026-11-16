@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<html lang="es" th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Harmony | Mi perfil</title>
+    <title th:text="#{profile.title}">Harmony | Mi perfil</title>
     <style>
         body {
             margin: 0;
@@ -117,11 +117,11 @@
             gap: 6px;
         }
     </style>
-</head>
+<style>:root{color-scheme:dark}body{background:#080808!important;color:#f8f8ff!important}h1,h2,h3{color:#d4af37!important}a{color:#d4af37!important}.card,.container,.post-card,.comments-card{border-color:#8b7324!important}button{background:#d4af37!important;color:#080808!important}</style></head>
 <body>
 <div class="card">
-    <a th:href="@{/home}" class="back-link">← Volver al inicio</a>
-    <h1>Mi perfil</h1>
+    <a th:href="@{/home}" class="back-link" th:text="#{common.backToHomeArrow}">← Volver al inicio</a>
+    <h1 th:text="#{profile.heading}">Mi perfil</h1>
     <div class="alerts">
         <div th:if="${profileSuccess}" class="alert success" th:text="${profileSuccess}">Nombre actualizado.</div>
         <div th:if="${profileError}" class="alert error" th:text="${profileError}">Error</div>
@@ -130,24 +130,50 @@
     </div>
 
     <section class="section">
-        <h2 style="margin:0;">Actualizar nombre de usuario</h2>
-        <form th:action="@{/profile/username}" th:object="${profileForm}" method="post">
-            <label for="username">Nombre de usuario</label>
-            <input id="username" type="text" th:field="*{username}" th:value="${session.username}" placeholder="Nuevo nickname" required>
-            <button type="submit">Guardar cambios</button>
+        <h2 style="margin:0;" th:text="#{profile.avatarHeading}">Foto de perfil</h2>
+        <div style="display:flex;align-items:center;gap:16px;">
+            <img th:if="${!#strings.isEmpty(avatarUrl)}" th:src="${avatarUrl}" th:alt="${session.username}"
+                 style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:2px solid #d4af37;">
+            <span th:if="${#strings.isEmpty(avatarUrl)}"
+                  th:text="${session.username != null ? #strings.substring(session.username,0,1).toUpperCase() : 'U'}"
+                  style="display:inline-grid;place-items:center;width:72px;height:72px;border-radius:50%;border:2px solid #d4af37;color:#d4af37;font:700 28px Georgia,serif;background:#17140a;"></span>
+            <span th:text="${session.username}" style="font-size:18px;font-weight:600;"></span>
+        </div>
+        <form th:action="@{/profile/avatar}" method="post" enctype="multipart/form-data" style="display:flex;flex-direction:column;gap:12px;">
+            <input type="hidden" name="from" value="account">
+            <label for="accountAvatarFile" th:text="#{profile.avatarUpload}">Subir imagen (PNG, JPG, WEBP, GIF)</label>
+            <input id="accountAvatarFile" type="file" name="avatarFile" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
+                   style="width:100%;padding:10px;border-radius:12px;border:1px dashed rgba(212,175,55,0.45);background:rgba(15,23,42,0.65);color:#e2e8f0;">
+            <label for="accountAvatarUrl" th:text="#{profile.avatarUrl}">O pegar enlace de imagen (https://...)</label>
+            <input id="accountAvatarUrl" type="text" name="avatarUrl" maxlength="255" th:value="${avatarUrl}" placeholder="https://...">
+            <button type="submit" th:text="#{profile.avatarSave}">Guardar foto</button>
+        </form>
+        <form th:if="${!#strings.isEmpty(avatarUrl)}" th:action="@{/profile/avatar}" method="post">
+            <input type="hidden" name="from" value="account">
+            <input type="hidden" name="remove" value="true">
+            <button type="submit" th:text="#{profile.avatarRemove}">Quitar foto actual</button>
         </form>
     </section>
 
     <section class="section">
-        <h2 style="margin:0;">Cambiar contraseña</h2>
+        <h2 style="margin:0;" th:text="#{profile.updateUsername}">Actualizar nombre de usuario</h2>
+        <form th:action="@{/profile/username}" th:object="${profileForm}" method="post">
+            <label for="username" th:text="#{account.username}">Nombre de usuario</label>
+            <input id="username" type="text" th:field="*{username}" th:value="${session.username}" placeholder="Nuevo nickname" required>
+            <button type="submit" th:text="#{common.saveChanges}">Guardar cambios</button>
+        </form>
+    </section>
+
+    <section class="section">
+        <h2 style="margin:0;" th:text="#{profile.changePassword}">Cambiar contraseña</h2>
         <form th:action="@{/profile/password}" th:object="${passwordForm}" method="post">
-            <label for="currentPassword">Contraseña actual</label>
+            <label for="currentPassword" th:text="#{account.currentPassword}">Contraseña actual</label>
             <input id="currentPassword" type="password" th:field="*{currentPassword}" placeholder="********" required>
 
-            <label for="newPassword">Nueva contraseña</label>
+            <label for="newPassword" th:text="#{account.newPassword}">Nueva contraseña</label>
             <input id="newPassword" type="password" th:field="*{newPassword}" placeholder="Debe incluir mayúsculas y números" required>
 
-            <button type="submit">Actualizar contraseña</button>
+            <button type="submit" th:text="#{profile.updatePasswordButton}">Actualizar contraseña</button>
         </form>
     </section>
 </div>

@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<html lang="es" th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Harmony | Editar publicación</title>
+    <title th:text="#{post.editTitle}">Harmony | Editar publicación</title>
     <style>
         body {
             margin: 0;
@@ -116,11 +116,11 @@
             box-shadow: 0 18px 36px rgba(99, 102, 241, 0.35);
         }
     </style>
-</head>
+<style>:root{color-scheme:dark}body{background:#080808!important;color:#f8f8ff!important}h1,h2,h3{color:#d4af37!important}a{color:#d4af37!important}.card,.container,.post-card,.comments-card{border-color:#8b7324!important}button{background:#d4af37!important;color:#080808!important}</style></head>
 <body>
 <div class="card">
-    <h1>Editar publicación</h1>
-    <p>Ajusta los detalles de tu track para mantener a tu banda al día.</p>
+    <h1 th:text="#{post.editHeading}">Editar publicación</h1>
+    <p th:text="#{post.editSubtitle}">Ajusta los detalles de tu track para mantener a tu banda al día.</p>
 
     <div th:if="${updateError}" class="alert error" th:text="${updateError}">
         Ocurrió un problema al editar.
@@ -128,37 +128,37 @@
 
     <form th:action="@{|/posts/${postId}/edit|}" th:object="${postForm}" method="post">
         <div>
-            <label for="title">Título</label>
+            <label for="tags" th:text="#{tags.help}">Etiquetas (hasta cinco, separadas por coma)</label><input id="tags" th:field="*{tags}" maxlength="254" placeholder="jazz, bajo, colaboración">
+        <label for="title" th:text="#{band.title}">Título</label>
             <input id="title" type="text" th:field="*{title}" placeholder="Título de la publicación" required>
         </div>
 
         <div>
-            <label for="description">Descripción</label>
+            <label for="description" th:text="#{band.description}">Descripción</label>
             <textarea id="description" th:field="*{description}" maxlength="500" placeholder="Describe los cambios, feedback deseado o referencias."></textarea>
         </div>
 
         <div>
-            <label for="audioUrl">URL del audio</label>
+            <label for="audioUrl" th:text="#{post.audioUrl}">URL del audio</label>
             <input id="audioUrl" type="text" th:field="*{audioUrl}" placeholder="https://..." required>
         </div>
 
         <div>
-            <label for="durationInSeconds">Duración (segundos)</label>
+            <label for="durationInSeconds" th:text="#{post.durationSeconds}">Duración (segundos)</label>
             <input id="durationInSeconds" type="number" th:field="*{durationInSeconds}" min="0" placeholder="180">
         </div>
 
         <div>
-            <label for="visibility">Visibilidad</label>
+            <label for="visibility" th:text="#{post.visibility}">Visibilidad</label>
             <select id="visibility" th:field="*{visibility}">
-                <option th:value="${T(com.example.demo.Models.Visibility).PUBLIC}">Público</option>
-                <option th:value="${T(com.example.demo.Models.Visibility).FOLLOWERS}">Seguidores</option>
-                <option th:value="${T(com.example.demo.Models.Visibility).PRIVATE}">Privado</option>
+                <option th:value="${T(com.example.demo.Models.Visibility).PUBLIC}" th:text="#{visibility.public}">Público</option>
+                <option th:value="${T(com.example.demo.Models.Visibility).PRIVATE}" th:text="#{visibility.private}">Privado</option>
             </select>
         </div>
 
         <div class="actions">
-            <a th:href="@{|/posts/${postId}|}">Cancelar</a>
-            <button type="submit">Guardar cambios</button>
+            <a th:href="@{|/posts/${postId}|}" th:text="#{common.cancel}">Cancelar</a>
+            <button type="submit" th:text="#{common.saveChanges}">Guardar cambios</button>
         </div>
     </form>
 </div>

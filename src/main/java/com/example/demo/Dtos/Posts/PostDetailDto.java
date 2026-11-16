@@ -14,8 +14,17 @@ public class PostDetailDto {
     private String audioUrl;
     private Integer durationInSeconds;
     private String authorUsername;
+    private String authorAvatarUrl;
     private LocalDateTime createdAt;
     private List<Comment> comments;
+
+    public String getAuthorAvatarUrl() {
+        return authorAvatarUrl;
+    }
+
+    public void setAuthorAvatarUrl(String authorAvatarUrl) {
+        this.authorAvatarUrl = authorAvatarUrl;
+    }
 
     public Long getId() {
         return id;

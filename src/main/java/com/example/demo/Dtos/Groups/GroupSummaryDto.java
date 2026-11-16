@@ -5,6 +5,7 @@ public class GroupSummaryDto {
     private Long id;
     private String name;
     private String description;
+    private String avatarUrl;
     private int memberCount;
     private java.util.List<MemberDto> members;
     private boolean owner;
@@ -18,6 +19,14 @@ public class GroupSummaryDto {
         this.description = description;
         this.memberCount = memberCount;
         this.owner = owner;
+    }
+
+    public String getAvatarUrl() {
+        return avatarUrl;
+    }
+
+    public void setAvatarUrl(String avatarUrl) {
+        this.avatarUrl = avatarUrl;
     }
 
     public Long getId() {

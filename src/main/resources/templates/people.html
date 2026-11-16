@@ -1,0 +1,10 @@
+<!DOCTYPE html><html lang="es" th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Harmony · Músicos</title><link rel="stylesheet" th:href="@{/css/harmony.css}"></head><body><nav th:replace="~{fragments :: nav}"></nav><main><div class="notice" role="status" th:if="${message}" th:text="${message}"></div><section class="card hero"><span class="eyebrow" th:text="#{people.eyebrow}">La comunidad</span><h1 th:text="#{people.title}">Encontrá otros sonidos.</h1><p th:text="#{people.intro}">Conocé a los músicos que forman parte de Harmony.</p></section><div class="layout"><section><article class="card row-avatar" th:each="p : ${people}">
+  <a th:href="@{|/people/${p.id}|}">
+    <img class="avatar-img avatar-md" th:if="${!#strings.isEmpty(p.avatarUrl)}" th:src="${p.avatarUrl}" th:alt="${p.username}">
+    <span class="avatar avatar-md" th:if="${#strings.isEmpty(p.avatarUrl)}" th:text="${#strings.substring(p.username,0,1).toUpperCase()}"></span>
+  </a>
+  <div class="row-avatar-info">
+    <h2 style="margin:0 0 4px"><a th:href="@{|/people/${p.id}|}" th:text="${p.username}"></a></h2>
+    <p style="margin:0" th:text="${p.bio}"></p>
+  </div>
+</article></section><aside><div class="card"><h2 th:text="#{people.blocked}">Usuarios bloqueados</h2><p th:if="${#lists.isEmpty(blocked)}" class="muted" th:text="#{people.none}">No bloqueaste a nadie.</p><form th:each="p : ${blocked}" th:action="@{|/people/${p.id}/block|}" method="post"><p th:text="${p.username}"></p><input type="hidden" name="blocked" value="false"><button th:text="#{people.unblock}">Desbloquear</button></form></div></aside></div></main></body></html>

@@ -15,6 +15,7 @@ import java.util.List;
 @Service
 public class CommentService {
 
+    @org.springframework.beans.factory.annotation.Autowired private CommunityService community;
     private final CommentRepository commentRepository;
     private final PostRepository postRepository;
     private final UserRepository userRepository;
@@ -42,8 +43,7 @@ public class CommentService {
             throw new IllegalArgumentException("El comentario no puede superar los 280 caracteres.");
         }
 
-        Post post = postRepository.findById(request.getPostId())
-                .orElseThrow(() -> new IllegalArgumentException("No se encontró el post."));
+        Post post = community.visiblePost(request.getPostId(),authorId);
 
         User author = userRepository.findByIdAndDeletedFalse(authorId)
                 .orElseThrow(() -> new IllegalArgumentException("No se encontró el usuario."));

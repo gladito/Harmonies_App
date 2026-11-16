@@ -5,6 +5,7 @@ public class MemberDto {
     private Long id;
     private String username;
     private boolean owner;
+    private String avatarUrl;
 
     public MemberDto() {
     }
@@ -13,6 +14,21 @@ public class MemberDto {
         this.id = id;
         this.username = username;
         this.owner = owner;
+    }
+
+    public MemberDto(Long id, String username, boolean owner, String avatarUrl) {
+        this.id = id;
+        this.username = username;
+        this.owner = owner;
+        this.avatarUrl = avatarUrl;
+    }
+
+    public String getAvatarUrl() {
+        return avatarUrl;
+    }
+
+    public void setAvatarUrl(String avatarUrl) {
+        this.avatarUrl = avatarUrl;
     }
 
     public Long getId() {

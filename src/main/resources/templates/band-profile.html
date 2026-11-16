@@ -1,0 +1,54 @@
+<!DOCTYPE html><html lang="es" th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Harmony · Banda</title><link rel="stylesheet" th:href="@{/css/harmony.css}"></head><body><nav th:replace="~{fragments :: nav}"></nav><main><div class="notice" role="status" th:if="${message}" th:text="${message}"></div>
+<section class="card hero">
+  <div class="hero-header">
+    <img class="avatar-img avatar-lg" th:if="${!#strings.isEmpty(band.avatarUrl)}" th:src="${band.avatarUrl}" th:alt="${band.name}">
+    <div class="avatar avatar-lg" th:if="${#strings.isEmpty(band.avatarUrl)}" th:text="${#strings.substring(band.name,0,1).toUpperCase()}"></div>
+    <div class="hero-header-info">
+      <span class="eyebrow" th:text="#{band.eyebrow}">Una banda. Muchos sonidos.</span>
+      <h1 th:text="${band.name}"></h1>
+      <p th:text="${band.description}"></p>
+      <div class="actions">
+        <a th:if="${canApprove}" class="btn" th:href="@{/groups/requests}" th:text="#{band.requests}">Revisar solicitudes</a>
+        <a th:if="${isOwner}" th:href="@{|/groups/${band.id}/edit|}" th:text="#{band.edit}">Editar banda</a>
+        <form th:if="${!isMember}" th:action="@{|/groups/${band.id}/request|}" method="post"><button th:text="#{band.join}">Solicitar ingreso</button></form>
+        <form th:if="${isMember and !isOwner}" th:action="@{|/groups/${band.id}/leave|}" method="post"><button th:text="#{band.leave}">Abandonar banda</button></form>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="layout"><section><h2 th:text="#{band.posts}">Publicaciones de la banda</h2><div class="card" th:if="${#lists.isEmpty(posts)}" th:text="#{posts.empty}">Todavía no hay publicaciones visibles.</div><article class="card" th:each="p : ${posts}"><h3><a th:href="@{|/posts/${p.id}|}" th:text="${p.title}"></a></h3><p th:text="${p.description}"></p><audio controls preload="none" th:src="${p.audioUrl}"></audio></article><div class="card" th:if="${canPublish}"><h2 th:text="#{band.publishAs}">Publicar como banda</h2><form th:action="@{|/bands/${band.id}/posts|}" method="post"><label><span th:text="#{band.title}">Título</span><input name="title" maxlength="120" required></label><label><span th:text="#{band.description}">Descripción</span><textarea name="description" maxlength="500"></textarea></label><label><span th:text="#{tags.label}">Etiquetas</span><input name="tags" maxlength="254" placeholder="jazz, bajo"></label><label><span th:text="#{band.audio}">Enlace de audio HTTPS</span><input name="audioUrl" type="url" maxlength="255" required placeholder="https://..."></label><input type="hidden" name="visibility" value="PUBLIC"><button th:text="#{band.publish}">Publicar</button></form></div></section>
+<aside>
+  <div class="card" th:if="${isOwner}">
+    <h2 th:text="#{band.avatarHeading}">Foto de perfil de la banda</h2>
+    <form th:action="@{|/bands/${band.id}/avatar|}" method="post" enctype="multipart/form-data">
+      <label for="bandAvatarFile" th:text="#{band.avatarUpload}">Subir foto de la banda (PNG, JPG, WEBP, GIF)</label>
+      <input id="bandAvatarFile" type="file" name="avatarFile" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml">
+      <label for="bandAvatarUrl" th:text="#{band.avatarUrl}">O enlace de imagen (https://...)</label>
+      <input id="bandAvatarUrl" type="text" name="avatarUrl" maxlength="255" th:value="${band.avatarUrl}" placeholder="https://...">
+      <button type="submit" th:text="#{band.avatarSave}">Actualizar foto de la banda</button>
+    </form>
+    <form th:if="${!#strings.isEmpty(band.avatarUrl)}" th:action="@{|/bands/${band.id}/avatar|}" method="post" style="margin-top:10px">
+      <input type="hidden" name="remove" value="true">
+      <button type="submit" th:text="#{band.avatarRemove}">Quitar foto de la banda</button>
+    </form>
+  </div>
+  <div class="card"><h2 th:text="#{band.members}">Integrantes</h2>
+    <div class="member" th:each="member : ${members}">
+      <div class="row-avatar">
+        <a th:href="@{|/people/${member.id}|}">
+          <img class="avatar-img avatar-sm" th:if="${!#strings.isEmpty(member.avatarUrl)}" th:src="${member.avatarUrl}" th:alt="${member.username}">
+          <span class="avatar avatar-sm" th:if="${#strings.isEmpty(member.avatarUrl)}" th:text="${#strings.substring(member.username,0,1).toUpperCase()}"></span>
+        </a>
+        <div class="row-avatar-info">
+          <div class="actions" style="gap:8px">
+            <a th:href="@{|/people/${member.id}|}" th:text="${member.username}"></a>
+            <span th:if="${member.owner}" class="pill" th:text="#{band.owner}">Dueño</span>
+          </div>
+          <p style="margin:2px 0 0" class="muted" th:text="${member.instrument}"></p>
+        </div>
+      </div>
+      <details th:if="${isOwner or member.id == session.userId}"><summary th:text="#{band.settings}">Instrumento y permisos</summary><form th:action="@{|/bands/${band.id}/members/${member.id}|}" method="post"><label><span th:text="#{band.instrument}">Instrumento</span><input name="instrument" th:value="${member.instrument}" maxlength="80" required></label><div th:if="${isOwner and !member.owner}"><label><input type="checkbox" name="publish" th:checked="${member.publish}"><span th:text="#{band.canPublish}">Puede publicar</span></label><label><input type="checkbox" name="approve" th:checked="${member.approve}"><span th:text="#{band.canApprove}">Puede aprobar integrantes</span></label></div><button th:text="#{common.save}">Guardar</button></form></details>
+      <form th:if="${isOwner and !member.owner}" th:action="@{|/bands/${band.id}/transfer|}" method="post" th:attr="data-confirm=#{band.confirmTransfer}"><input type="hidden" name="target" th:value="${member.id}"><button th:text="#{band.transfer}">Transferir propiedad</button></form>
+    </div>
+  </div>
+</aside></div></main><script defer th:src="@{/js/harmony.js}"></script></body></html>

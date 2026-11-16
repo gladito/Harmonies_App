@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es" th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="#{jobs.pageTitle}">Harmony · Bolsa de trabajo</title>
+    <link rel="stylesheet" th:href="@{/css/harmony.css}">
+</head>
+<body>
+<nav th:replace="~{fragments :: nav}"></nav>
+<main>
+    <div class="notice" role="status" th:if="${message}" th:text="${message}"></div>
+
+    <section class="card hero">
+        <span class="eyebrow" th:text="#{jobs.eyebrow}">Bolsa de trabajo</span>
+        <h1 th:text="#{jobs.title}">Tocá, grabá, enseñá.</h1>
+        <p class="muted" th:text="#{jobs.intro}">Sesiones, fechas en vivo, mezcla, clases y bandas que buscan integrantes.</p>
+    </section>
+
+    <div class="layout">
+        <section>
+            <div class="actions filter-bar">
+                <a class="pill" th:href="@{/jobs}" th:classappend="${type == null} ? 'active'" th:text="#{common.all}">Todas</a>
+                <a class="pill" th:each="t : ${types}" th:href="@{/jobs(type=${t})}"
+                   th:classappend="${type == t} ? 'active'" th:text="#{${'job.type.' + t}}"></a>
+            </div>
+
+            <div class="card" th:if="${#lists.isEmpty(jobs)}" th:text="#{jobs.empty}">No hay avisos abiertos en esta categoría.</div>
+
+            <article class="card job" th:each="j : ${jobs}">
+                <div class="actions">
+                    <span class="pill" th:text="#{${'job.type.' + j.type}}"></span>
+                    <span class="pill" th:if="${j.instrument}" th:text="${j.instrument}"></span>
+                    <span class="pill" th:if="${j.remote}" th:text="#{job.remote}">Remoto</span>
+                    <small class="muted" th:text="${#temporals.format(j.createdAt,'dd/MM')}"></small>
+                </div>
+                <h2><a th:href="@{|/jobs/${j.id}|}" th:text="${j.title}"></a></h2>
+                <p class="small" th:if="${j.description}" th:text="${#strings.abbreviate(j.description,220)}"></p>
+                <div class="listing-footer">
+                    <span>
+                        <span class="price" th:text="${j.pay}"></span>
+                        <span class="muted small" th:text="| · ${j.location} · |"></span>
+                        <a class="small" th:href="@{|/people/${j.author.id}|}" th:text="${j.author.username}"></a>
+                    </span>
+                    <a class="btn" th:href="@{|/jobs/${j.id}|}" th:text="#{jobs.view}">Ver aviso</a>
+                </div>
+            </article>
+        </section>
+
+        <aside>
+            <div class="card">
+                <details>
+                    <summary th:text="#{jobs.publish}">Publicar un aviso</summary>
+                    <form th:action="@{/jobs}" method="post">
+                        <label for="title" th:text="#{jobs.form.title}">Título</label>
+                        <input id="title" name="title" required maxlength="120">
+                        <label for="type" th:text="#{jobs.form.type}">Tipo de trabajo</label>
+                        <select id="type" name="type" required>
+                            <option th:each="t : ${types}" th:value="${t}" th:text="#{${'job.type.' + t}}"></option>
+                        </select>
+                        <label for="instrument" th:text="#{jobs.form.instrument}">Instrumento o rol</label>
+                        <input id="instrument" name="instrument" maxlength="80">
+                        <label for="location" th:text="#{jobs.form.location}">Ubicación</label>
+                        <input id="location" name="location" required maxlength="120">
+                        <label><input type="checkbox" name="remote" value="true"><span th:text="#{jobs.form.remote}">Se puede hacer de forma remota</span></label>
+                        <label for="pay" th:text="#{jobs.form.pay}">Remuneración</label>
+                        <input id="pay" name="pay" required maxlength="60" th:placeholder="#{jobs.form.payPlaceholder}">
+                        <label for="description" th:text="#{jobs.form.description}">Descripción</label>
+                        <textarea id="description" name="description" maxlength="1000"></textarea>
+                        <button th:text="#{jobs.form.submit}">Publicar aviso</button>
+                    </form>
+                </details>
+            </div>
+
+            <div class="card">
+                <h2 th:text="#{jobs.myApplications}">Mis postulaciones</h2>
+                <p class="muted" th:if="${#lists.isEmpty(applications)}" th:text="#{jobs.noApplications}">Todavía no te postulaste a ningún aviso.</p>
+                <p th:each="a : ${applications}">
+                    <a th:href="@{|/jobs/${a.job.id}|}" th:text="${a.job.title}"></a><br>
+                    <span class="status" th:classappend="|status-${#strings.toLowerCase(a.status)}|" th:text="#{${'application.status.' + a.status}}"></span>
+                </p>
+            </div>
+
+            <div class="card">
+                <h2 th:text="#{jobs.myPostings}">Mis avisos</h2>
+                <p class="muted" th:if="${#lists.isEmpty(postings)}" th:text="#{jobs.noPostings}">No publicaste avisos.</p>
+                <p th:each="j : ${postings}">
+                    <a th:href="@{|/jobs/${j.id}|}" th:text="${j.title}"></a>
+                    <span class="status" th:classappend="${j.open} ? 'status-confirmed' : 'status-cancelled'" th:text="${j.open} ? #{job.open} : #{job.closed}"></span>
+                </p>
+            </div>
+        </aside>
+    </div>
+</main>
+</body>
+</html>

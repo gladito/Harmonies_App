@@ -14,6 +14,7 @@ import java.util.List;
 @Controller
 public class HomeController {
 
+    @org.springframework.beans.factory.annotation.Autowired private com.example.demo.Services.CommunityService community;
     private final PostService postService;
     private final GroupService groupService;
 
@@ -23,7 +24,7 @@ public class HomeController {
     }
 
     @GetMapping("/home")
-    public String home(HttpSession session, Model model) {
+    public String home(HttpSession session, Model model, @org.springframework.web.bind.annotation.RequestParam(defaultValue="0") int page, @org.springframework.web.bind.annotation.RequestParam(defaultValue="") String tag) {
         Long userId = (Long) session.getAttribute("userId");
         if (userId == null) {
             return "redirect:/login";
@@ -32,8 +33,11 @@ public class HomeController {
         String username = (String) session.getAttribute("username");
         model.addAttribute("username", username);
 
-        List<PostFeedResponseDto> feed = postService.getLatestPublicPosts(12);
+        var result=postService.feed(userId,page,tag);
+        List<PostFeedResponseDto> feed = result.posts();
+        model.addAttribute("page",result.page());model.addAttribute("hasMore",result.hasMore());model.addAttribute("tag",result.tag());
         model.addAttribute("feed", feed);
+        model.addAttribute("reactions",community.reactions(feed.stream().map(PostFeedResponseDto::getId).toList(),userId));
 
         List<GroupSummaryDto> groups = groupService.getGroupsForUser(userId);
         model.addAttribute("groups", groups);

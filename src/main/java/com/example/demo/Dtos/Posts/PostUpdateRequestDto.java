@@ -6,6 +6,9 @@ public class PostUpdateRequestDto {
 
     private Long id;
     private String title;
+    private String tags;
+    public String getTags(){return tags;}
+    public void setTags(String tags){this.tags=tags;}
     private String description;
     private String audioUrl;
     private Integer durationInSeconds;

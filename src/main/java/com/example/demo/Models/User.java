@@ -9,7 +9,15 @@ import java.util.Set;
 
 @Entity
 @Table(name = "users")
-public class User extends Person {
+public class User extends BaseEntity {
+    @OneToOne(cascade = CascadeType.ALL, optional = false)
+    @JoinColumn(name = "person_id", nullable = false, unique = true)
+    private Person person;
+    public Person getPerson() { return person; }
+    public String getFirstName() { return person.getFirstName(); }
+    public String getLastName() { return person.getLastName(); }
+    public LocalDate getBirthDate() { return person.getBirthDate(); }
+
 
     @Column(nullable = false, unique = true, length = 40)
     private String username;
@@ -34,7 +42,7 @@ public class User extends Person {
     )
     private Set<Role> roles = new HashSet<>();
 
-    @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "owner")
     private Set<Group> ownedGroups = new HashSet<>();
 
     @ManyToMany(mappedBy = "members")
@@ -44,7 +52,8 @@ public class User extends Person {
     }
 
     public User(String firstName, String lastName, LocalDate birthDate, String username, String email, String password) {
-        super(firstName, lastName, birthDate);
+        this.person = new Person(firstName, lastName, birthDate);
+        assignProfile(new Profile(this));
         this.username = Objects.requireNonNull(username, "username es obligatorio");
         this.email = Objects.requireNonNull(email, "email es obligatorio");
         setPassword(Objects.requireNonNull(password, "password es obligatorio"));
@@ -71,7 +80,7 @@ public class User extends Person {
     }
 
     public void setPassword(String password) {
-        validatePassword(password);
+        Objects.requireNonNull(password, "password es obligatorio");
         this.password = password;
     }
 
@@ -142,15 +151,5 @@ public class User extends Person {
         }
     }
 
-    private void validatePassword(String password) {
-        if (password == null) {
-            throw new IllegalArgumentException("password es obligatorio");
-        }
-        boolean hasUppercase = password.chars().anyMatch(Character::isUpperCase);
-        boolean hasDigit = password.chars().anyMatch(Character::isDigit);
-        if (!hasUppercase || !hasDigit) {
-            throw new IllegalArgumentException("La contraseña debe contener al menos una letra mayúscula y un número");
-        }
-    }
 }
 

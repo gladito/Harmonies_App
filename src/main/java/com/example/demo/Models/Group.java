@@ -10,13 +10,16 @@ import java.util.Set;
 @Table(name = "groups")
 public class Group extends BaseEntity {
 
-    public static final int MAX_MEMBERS = 4;
+    @Version private long version;
 
     @Column(nullable = false, unique = true, length = 80)
     private String name;
 
     @Column(length = 255)
     private String description;
+
+    @Column(name = "avatar_url", length = 255)
+    private String avatarUrl;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "owner_id")
@@ -55,6 +58,14 @@ public class Group extends BaseEntity {
         this.description = description;
     }
 
+    public String getAvatarUrl() {
+        return avatarUrl;
+    }
+
+    public void setAvatarUrl(String avatarUrl) {
+        this.avatarUrl = avatarUrl;
+    }
+
     public User getOwner() {
         return owner;
     }
@@ -80,11 +91,11 @@ public class Group extends BaseEntity {
     }
 
     public boolean isFull() {
-        return getMemberCount() >= MAX_MEMBERS;
+        return false;
     }
 
     public boolean hasMember(User user) {
-        return user != null && members.contains(user);
+        return user != null && members.stream().anyMatch(m -> m == user || (m.getId() != null && m.getId().equals(user.getId())));
     }
 
     public void addMember(User user) {
@@ -94,7 +105,7 @@ public class Group extends BaseEntity {
         if (isFull() && !hasMember(user)) {
             throw new IllegalStateException("El grupo ha alcanzado el máximo de miembros");
         }
-        members.add(user);
+        if (!hasMember(user)) members.add(user);
         user.addGroup(this);
     }
 

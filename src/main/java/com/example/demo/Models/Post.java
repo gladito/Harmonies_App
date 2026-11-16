@@ -24,6 +24,11 @@ public class Post extends Content {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "profile_id")
     private Profile profile;
+    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name="band_id")
+    private Group band;
+    public Group getBand() { return band; }
+    public void setBand(Group band) { this.band = band; }
+
 
     @ManyToMany
     @JoinTable(

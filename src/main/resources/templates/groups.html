@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<html lang="es" th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Harmony | Mis bandas</title>
+    <title th:text="#{nav.bands}">Harmony | Mis bandas</title>
     <style>
         body {
             margin: 0;
@@ -183,21 +183,22 @@
             color: rgba(226, 232, 240, 0.8);
         }
     </style>
-</head>
+<style>:root{color-scheme:dark}body{background:#080808!important;color:#f8f8ff!important}h1,h2,h3{color:#d4af37!important}a{color:#d4af37!important}.card,.container,.post-card,.comments-card{border-color:#8b7324!important}button{background:#d4af37!important;color:#080808!important}</style></head>
 <body>
 <header>
     <h1 th:text="'Bandas de ' + ${username}">Bandas</h1>
     <div class="nav-links">
-        <a th:href="@{/home}">Volver al inicio</a>
-        <a th:href="@{/groups/new}">Crear nueva banda</a>
-        <a th:href="@{/groups/explore}">Explorar bandas</a>
-        <a th:href="@{/profile}">Mi perfil</a>
-        <a th:if="${hasOwnedGroups}" th:href="@{/groups/requests}">Solicitudes recibidas</a>
+        <a th:href="@{/home}" th:text="#{common.backToHome}">Volver al inicio</a>
+        <a th:href="@{/groups/new}" th:text="#{groups.create}">Crear nueva banda</a>
+        <a th:href="@{/groups/explore}" th:text="#{nav.explore}">Explorar bandas</a>
+        <a th:href="@{/profile}" th:text="#{nav.profile}">Mi perfil</a>
+        <a th:href="@{/groups/requests}" th:text="#{groups.pendingRequests}">Solicitudes recibidas</a>
+        <a th:href="@{/movements}" th:text="#{nav.movements}">Movimientos</a>
     </div>
 </header>
 <main>
     <div class="headline">
-        <h2>Tus proyectos musicales</h2>
+        <h2 th:text="#{groups.title}">Tus proyectos musicales</h2>
         <div class="nav-links" style="gap:12px;">
             <span th:if="${createSuccess}" th:text="${createSuccess}" style="background: rgba(22, 163, 74, 0.2); color: #bbf7d0; border: 1px solid rgba(22, 163, 74, 0.4); padding: 10px 18px; border-radius: 999px;">¡Tu banda se creó!</span>
             <span th:if="${createError}" th:text="${createError}" style="background: rgba(248, 113, 113, 0.18); color: #fecaca; border: 1px solid rgba(248, 113, 113, 0.35); padding: 10px 18px; border-radius: 999px;">Error</span>
@@ -207,33 +208,51 @@
     <div th:if="${hasGroups}" class="groups-grid">
         <div th:each="group : ${groups}" class="group-card">
             <div class="meta">
-                <span th:text="'Integrantes: ' + ${group.memberCount}">Integrantes: 1</span>
-                <span th:if="${group.owner}" class="owner-badge">Eres el líder</span>
+                <span th:text="#{home.memberCount(${group.memberCount})}">Integrantes: 1</span>
+                <span th:if="${group.owner}" class="owner-badge" th:text="#{groups.leaderBadge}">Eres el líder</span>
             </div>
-            <h3 th:text="${group.name}">Nombre de la banda</h3>
-            <p th:text="${group.description != null ? group.description : 'Sin descripción por ahora.'}">
+            <div style="display:flex;align-items:center;gap:14px;">
+                <a th:href="@{|/bands/${group.id}|}">
+                    <img th:if="${!#strings.isEmpty(group.avatarUrl)}" th:src="${group.avatarUrl}" th:alt="${group.name}"
+                         style="width:58px;height:58px;border-radius:50%;object-fit:cover;border:2px solid #d4af37;">
+                    <span th:if="${#strings.isEmpty(group.avatarUrl)}"
+                          th:text="${#strings.substring(group.name,0,1).toUpperCase()}"
+                          style="display:inline-grid;place-items:center;width:58px;height:58px;border-radius:50%;border:2px solid #d4af37;color:#d4af37;font:700 22px Georgia,serif;background:#17140a;"></span>
+                </a>
+                <div>
+                    <h3><a th:href="@{|/bands/${group.id}|}" th:text="${group.name}">Nombre de la banda</a></h3>
+                </div>
+            </div>
+            <p th:text="${group.description != null ? group.description : #messages.msg('groups.noDescription')}">
                 Sin descripción por ahora.
             </p>
             <div class="members">
-                <strong>Miembros</strong>
+                <strong th:text="#{groups.membersHeading}">Miembros</strong>
                 <ul>
-                    <li th:each="member : ${group.members}"
-                        th:text="${member.username + (member.owner ? ' (Líder)' : '')}">
-                        Usuario
+                    <li th:each="member : ${group.members}">
+                        <span style="display:inline-flex;align-items:center;gap:8px;">
+                            <img th:if="${!#strings.isEmpty(member.avatarUrl)}" th:src="${member.avatarUrl}" th:alt="${member.username}"
+                                 style="width:26px;height:26px;border-radius:50%;object-fit:cover;border:1px solid #d4af37;">
+                            <span th:if="${#strings.isEmpty(member.avatarUrl)}"
+                                  th:text="${#strings.substring(member.username,0,1).toUpperCase()}"
+                                  style="display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;border:1px solid #d4af37;color:#d4af37;font-size:12px;font-weight:700;"></span>
+                            <span th:text="${member.username + (member.owner ? ' ' + #messages.msg('groups.leader') : '')}">Usuario</span>
+                        </span>
                     </li>
                 </ul>
             </div>
             <form th:if="${group.owner}" th:action="@{|/groups/${group.id}/delete|}" method="post"
-                  onsubmit="return confirm('¿Eliminar banda y todos sus datos?');">
-                <button type="submit">Eliminar banda</button>
+                  th:attr="data-confirm=#{groups.confirmDelete}">
+                <button type="submit" th:text="#{groups.deleteBand}">Eliminar banda</button>
             </form>
             <form th:if="${!group.owner}" th:action="@{|/groups/${group.id}/leave|}" method="post"
-                  onsubmit="return confirm('¿Seguro que quieres salir de esta banda?');">
-                <button type="submit">Salir de la banda</button>
+                  th:attr="data-confirm=#{groups.confirmLeave}">
+                <button type="submit" th:text="#{groups.leaveBand}">Salir de la banda</button>
             </form>
             <div th:if="${group.owner}" style="margin-top:12px;">
                 <a th:href="@{|/groups/${group.id}/edit|}"
-                   style="text-decoration:none;display:inline-flex;padding:10px 18px;border-radius:999px;background:rgba(148,163,184,0.2);border:1px solid rgba(148,163,184,0.3);color:#e2e8f0;font-weight:600;">
+                   style="text-decoration:none;display:inline-flex;padding:10px 18px;border-radius:999px;background:rgba(148,163,184,0.2);border:1px solid rgba(148,163,184,0.3);color:#e2e8f0;font-weight:600;"
+                   th:text="#{groups.editBand}">
                     Editar banda
                 </a>
             </div>
@@ -241,11 +260,12 @@
     </div>
 
     <div th:if="${!hasGroups}" class="empty-state">
-        <h3>Aún no tienes bandas</h3>
-        <p>Empieza tu primer proyecto colaborativo creando una banda y compartiendo tus ideas musicales.</p>
-        <a th:href="@{/groups/new}" class="nav-links" style="display:inline-flex;">Crear banda</a>
+        <h3 th:text="#{groups.emptyTitle}">Aún no tienes bandas</h3>
+        <p th:text="#{groups.emptyText}">Empieza tu primer proyecto colaborativo creando una banda y compartiendo tus ideas musicales.</p>
+        <a th:href="@{/groups/new}" class="nav-links" style="display:inline-flex;" th:text="#{groups.create}">Crear banda</a>
     </div>
 </main>
+<script defer th:src="@{/js/harmony.js}"></script>
 </body>
 </html>
 

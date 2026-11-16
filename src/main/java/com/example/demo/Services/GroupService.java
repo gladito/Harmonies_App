@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 @Service
 public class GroupService {
 
+    @jakarta.persistence.PersistenceContext private jakarta.persistence.EntityManager em;
     private final GroupRepository groupRepository;
     private final UserRepository userRepository;
 
@@ -25,6 +26,7 @@ public class GroupService {
         this.userRepository = userRepository;
     }
 
+    @Transactional(readOnly=true)
     public List<GroupSummaryDto> getGroupsForUser(Long userId) {
         User user = userRepository.findByIdAndDeletedFalse(userId)
                 .orElseThrow(() -> new IllegalArgumentException("No se encontró el usuario."));
@@ -59,6 +61,9 @@ public class GroupService {
         }
 
         Group group = new Group(request.getName(), request.getDescription(), owner);
+        if (request.getAvatarUrl() != null && !request.getAvatarUrl().isBlank()) {
+            group.setAvatarUrl(request.getAvatarUrl().trim());
+        }
         groupRepository.save(group);
         return toSummaryDto(group, owner);
     }
@@ -67,6 +72,9 @@ public class GroupService {
     public void joinGroup(Long groupId, Long userId) {
         Group group = groupRepository.findByIdAndDeletedFalse(groupId)
                 .orElseThrow(() -> new IllegalArgumentException("No encontramos esa banda."));
+
+        em.lock(group,jakarta.persistence.LockModeType.PESSIMISTIC_WRITE);
+        em.refresh(group);
 
         User user = userRepository.findByIdAndDeletedFalse(userId)
                 .orElseThrow(() -> new IllegalArgumentException("No se encontró el usuario."));
@@ -98,6 +106,7 @@ public class GroupService {
             throw new IllegalStateException("No perteneces a esta banda.");
         }
 
+        em.createQuery("delete from Membership m where m.group.id=:g and m.user.id=:u").setParameter("g",groupId).setParameter("u",userId).executeUpdate();
         group.removeMember(user);
         groupRepository.save(group);
     }
@@ -128,6 +137,7 @@ public class GroupService {
         GroupCreateRequestDto dto = new GroupCreateRequestDto();
         dto.setName(group.getName());
         dto.setDescription(group.getDescription());
+        dto.setAvatarUrl(group.getAvatarUrl());
         return dto;
     }
 
@@ -149,6 +159,9 @@ public class GroupService {
 
         group.setName(request.getName());
         group.setDescription(request.getDescription());
+        if (request.getAvatarUrl() != null) {
+            group.setAvatarUrl(request.getAvatarUrl().isBlank() ? null : request.getAvatarUrl().trim());
+        }
         groupRepository.save(group);
         return toSummaryDto(group, group.getOwner());
     }
@@ -178,14 +191,15 @@ public class GroupService {
                 group.getMemberCount(),
                 isOwner
         );
+        dto.setAvatarUrl(group.getAvatarUrl());
         dto.setMembers(group.getMembers().stream()
                 .filter(member -> !member.isDeleted())
                 .map(member -> new MemberDto(
                         member.getId(),
                         member.getUsername(),
-                        group.getOwner() != null && group.getOwner().getId().equals(member.getId())))
+                        group.getOwner() != null && group.getOwner().getId().equals(member.getId()),
+                        member.getProfile() != null ? member.getProfile().getAvatarUrl() : null))
                 .collect(Collectors.toList()));
         return dto;
     }
 }
-

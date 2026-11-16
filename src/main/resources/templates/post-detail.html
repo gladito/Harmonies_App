@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<html lang="es" th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <title th:text="'Harmony | ' + ${post.title}">Harmony | Post</title>
@@ -155,9 +155,9 @@
             }
         }
     </style>
-</head>
+<style>:root{color-scheme:dark}body{background:#080808!important;color:#f8f8ff!important}h1,h2,h3{color:#d4af37!important}a{color:#d4af37!important}.card,.container,.post-card,.comments-card{border-color:#8b7324!important}button{background:#d4af37!important;color:#080808!important}</style></head>
 <body>
-<a th:href="@{/home}" class="back-link">← Volver al inicio</a>
+<a th:href="@{/home}" class="back-link" th:text="#{common.backToHomeArrow}">← Volver al inicio</a>
 <div style="max-width:960px;width:100%;margin-bottom:16px;">
     <div th:if="${postSuccess}" class="alert success" th:text="${postSuccess}" style="margin:0 0 12px 0;">Actualización exitosa.</div>
     <div th:if="${postError}" class="alert error" th:text="${postError}" style="margin:0 0 12px 0;">Error</div>
@@ -166,30 +166,37 @@
     <article class="post-card">
         <h1 th:text="${post.title}">Título del post</h1>
         <div class="meta">
-            <span th:text="'Por ' + ${post.authorUsername}">Por autor</span>
+            <span style="display:inline-flex;align-items:center;gap:10px;">
+                <img th:if="${!#strings.isEmpty(post.authorAvatarUrl)}" th:src="${post.authorAvatarUrl}" th:alt="${post.authorUsername}"
+                     style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:1.5px solid #d4af37;">
+                <span th:if="${#strings.isEmpty(post.authorAvatarUrl)}"
+                      th:text="${#strings.substring(post.authorUsername,0,1).toUpperCase()}"
+                      style="display:inline-grid;place-items:center;width:36px;height:36px;border-radius:50%;border:1.5px solid #d4af37;color:#d4af37;font-weight:700;"></span>
+                <span th:text="#{post.by(${post.authorUsername})}">Por autor</span>
+            </span>
             <span th:text="${#temporals.format(post.createdAt, 'dd MMM yyyy HH:mm')}">10 Nov 2025 18:00</span>
         </div>
         <div th:if="${isOwner}" style="margin-top:18px; display:flex; gap:12px;">
-            <a th:href="@{|/posts/${post.id}/edit|}" class="back-link" style="margin:0; padding:8px 16px; background:rgba(99,102,241,0.2); border-radius:999px;">Editar publicación</a>
-            <form th:action="@{|/posts/${post.id}/delete|}" method="post" onsubmit="return confirm('¿Estás seguro de eliminar esta publicación?');">
-                <button type="submit" style="border:none;padding:8px 16px;border-radius:999px;background:rgba(248,113,113,0.25);color:#fecaca;font-weight:600;cursor:pointer;">
+            <a th:href="@{|/posts/${post.id}/edit|}" class="back-link" style="margin:0; padding:8px 16px; background:rgba(99,102,241,0.2); border-radius:999px;" th:text="#{post.edit}">Editar publicación</a>
+            <form th:action="@{|/posts/${post.id}/delete|}" method="post" th:attr="data-confirm=#{post.confirmDelete}">
+                <button type="submit" style="border:none;padding:8px 16px;border-radius:999px;background:rgba(248,113,113,0.25);color:#fecaca;font-weight:600;cursor:pointer;" th:text="#{post.delete}">
                     Eliminar publicación
                 </button>
             </form>
         </div>
         <div class="audio-preview">
-            <strong>Escucha la demo:</strong>
-            <p th:text="${post.audioUrl}">https://...</p>
+            <strong th:text="#{post.listenDemo}">Escucha la demo:</strong>
+            <audio controls preload="none" th:src="${post.audioUrl}" style="width:100%" th:text="#{audio.unsupported}">Tu navegador no puede reproducir el audio.</audio>
             <p th:if="${post.durationInSeconds != null}"
-               th:text="'Duración: ' + ${post.durationInSeconds} + ' segundos'">Duración: 180 segundos</p>
+               th:text="#{post.duration(${post.durationInSeconds})}">Duración: 180 segundos</p>
         </div>
-        <div class="description" th:text="${post.description != null ? post.description : 'Sin descripción.'}">
+        <div class="description" th:text="${post.description != null ? post.description : #messages.msg('post.noDescription')}">
             Descripción del post.
         </div>
     </article>
 
     <section class="comments-card">
-        <h2>Comentarios</h2>
+        <h2 th:text="#{comments.heading}">Comentarios</h2>
 
         <div th:if="${commentSuccess}" class="alert success" th:text="${commentSuccess}">Comentario publicado.</div>
         <div th:if="${commentError}" class="alert error" th:text="${commentError}">Error</div>
@@ -205,23 +212,24 @@
                 </div>
                 <form th:if="${isOwner}" th:action="@{|/posts/${post.id}/comments/${comment.id}/delete|}" method="post"
                       style="margin-top:10px;text-align:right;">
-                    <button type="submit" style="border:none;background:rgba(248,113,113,0.2);color:#fecaca;padding:6px 12px;border-radius:999px;font-weight:600;cursor:pointer;">
+                    <button type="submit" style="border:none;background:rgba(248,113,113,0.2);color:#fecaca;padding:6px 12px;border-radius:999px;font-weight:600;cursor:pointer;" th:text="#{comments.delete}">
                         Eliminar comentario
                     </button>
                 </form>
             </div>
         </div>
-        <div th:if="${post.comments == null or post.comments.isEmpty()}" class="comment-item" style="text-align:center;">
+        <div th:if="${post.comments == null or post.comments.isEmpty()}" class="comment-item" style="text-align:center;" th:text="#{comments.empty}">
             Aún no hay comentarios. Sé el primero en dar feedback.
         </div>
 
         <form th:action="@{|/posts/${post.id}/comments|}" th:object="${commentForm}" method="post">
-            <label for="content">Agregar comentario</label>
-            <textarea id="content" th:field="*{content}" maxlength="280" placeholder="Deja feedback constructivo (máx. 280 caracteres)." required></textarea>
-            <button type="submit">Comentar</button>
+            <label for="content" th:text="#{comments.add}">Agregar comentario</label>
+            <textarea id="content" th:field="*{content}" maxlength="280" th:placeholder="#{comments.placeholder}" placeholder="Deja feedback constructivo (máx. 280 caracteres)." required></textarea>
+            <button type="submit" th:text="#{comments.submit}">Comentar</button>
         </form>
     </section>
 </div>
+<script defer th:src="@{/js/harmony.js}"></script>
 </body>
 </html>
 

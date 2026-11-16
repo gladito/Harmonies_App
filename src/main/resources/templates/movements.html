@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es" th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="#{movements.pageTitle}">Harmony · Movimientos de estado</title>
+    <link rel="stylesheet" th:href="@{/css/harmony.css}">
+    <style>
+        .movements-table-wrap {
+            overflow-x: auto;
+        }
+        table.movements-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        table.movements-table th,
+        table.movements-table td {
+            text-align: left;
+            padding: 14px 12px;
+            border-bottom: 1px solid #393220;
+            vertical-align: middle;
+        }
+        table.movements-table th {
+            color: var(--gold);
+            font-family: Cinzel, Georgia, serif;
+            font-size: 13px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            background: rgba(212, 175, 55, 0.06);
+        }
+        table.movements-table tr:hover td {
+            background: rgba(212, 175, 55, 0.04);
+        }
+        .transition-box {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .arrow {
+            color: var(--gold);
+            font-weight: 700;
+        }
+        .status-APPROVED, .status-ACCEPTED, .status-CONFIRMED, .status-OPEN {
+            border-color: var(--gold);
+            color: var(--gold);
+            background: rgba(212, 175, 55, 0.12);
+        }
+        .status-PENDING {
+            border-color: #8b7324;
+            color: #e8d38a;
+            background: rgba(139, 115, 36, 0.14);
+        }
+        .status-REJECTED, .status-CANCELLED, .status-CLOSED {
+            border-color: #7a3b3b;
+            color: #f2a6a6;
+            background: rgba(122, 59, 59, 0.18);
+        }
+        .status-INITIAL {
+            border-color: #555;
+            color: #aaa;
+        }
+    </style>
+</head>
+<body>
+<nav th:replace="~{fragments :: nav}"></nav>
+<main>
+    <div class="notice" role="status" th:if="${message}" th:text="${message}"></div>
+
+    <section class="card hero">
+        <span class="eyebrow" th:text="#{movements.eyebrow}">Trazabilidad y auditoría</span>
+        <h1 th:text="#{movements.title}">Historial de movimientos de estado</h1>
+        <p th:text="#{movements.intro}">Registro cronológico de la tabla state_movements con cada transición de estado, fecha, usuario ejecutor y motivo.</p>
+    </section>
+
+    <div class="actions filter-bar" style="justify-content:space-between;">
+        <div class="actions">
+            <a class="pill" th:classappend="${selectedType == null} ? 'active'"
+               th:href="@{/movements(mine=${onlyMine})}" th:text="#{common.all}">Todas</a>
+            <a class="pill" th:each="t : ${types}"
+               th:classappend="${selectedType == t} ? 'active'"
+               th:href="@{/movements(type=${t},mine=${onlyMine})}"
+               th:text="#{|movements.type.${t}|}">Tipo</a>
+        </div>
+        <div class="actions">
+            <a class="pill" th:classappend="${!onlyMine} ? 'active'"
+               th:href="@{/movements(type=${selectedType},mine=false)}"
+               th:text="#{movements.allUsers}">Todos los usuarios</a>
+            <a class="pill" th:classappend="${onlyMine} ? 'active'"
+               th:href="@{/movements(type=${selectedType},mine=true)}"
+               th:text="#{movements.onlyMine}">Solo mis movimientos</a>
+        </div>
+    </div>
+
+    <div class="card" th:if="${#lists.isEmpty(movements)}" th:text="#{movements.empty}">
+        No hay movimientos registrados para este filtro.
+    </div>
+
+    <div class="card movements-table-wrap" th:if="${!#lists.isEmpty(movements)}">
+        <table class="movements-table">
+            <thead>
+            <tr>
+                <th th:text="#{movements.col.id}">ID</th>
+                <th th:text="#{movements.col.date}">Fecha y hora</th>
+                <th th:text="#{movements.col.entity}">Entidad afectada</th>
+                <th th:text="#{movements.col.transition}">Transición de estado</th>
+                <th th:text="#{movements.col.actor}">Ejecutado por</th>
+                <th th:text="#{movements.col.note}">Motivo / Observación</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="m : ${movements}">
+                <td class="muted" th:text="'#' + ${m.id}">#1</td>
+                <td class="small" th:text="${#temporals.format(m.createdAt, 'dd/MM/yyyy HH:mm:ss')}">16/11/2026 02:45:00</td>
+                <td>
+                    <div>
+                        <span class="pill" th:text="#{|movements.type.${m.entityType}|}">Solicitud de banda</span>
+                        <small class="muted" th:text="'#' + ${m.entityId}">#1</small>
+                    </div>
+                    <div style="margin-top:4px;font-weight:600;" th:text="${m.entityLabel}">pepito → Los Errantes</div>
+                </td>
+                <td>
+                    <div class="transition-box">
+                        <span class="status"
+                              th:classappend="${m.previousStatus == null} ? 'status-INITIAL' : 'status-' + ${m.previousStatus}"
+                              th:text="${m.previousStatus != null ? m.previousStatus : #messages.msg('movements.initial')}">INICIAL</span>
+                        <span class="arrow">→</span>
+                        <span class="status"
+                              th:classappend="'status-' + ${m.newStatus}"
+                              th:text="${m.newStatus}">PENDING</span>
+                    </div>
+                </td>
+                <td>
+                    <a th:href="@{|/people/${m.actor.id}|}" class="row-avatar" style="gap:8px;">
+                        <img class="avatar-img avatar-sm" style="width:28px;height:28px;min-width:28px;"
+                             th:if="${m.actor.profile != null and !#strings.isEmpty(m.actor.profile.avatarUrl)}"
+                             th:src="${m.actor.profile.avatarUrl}" th:alt="${m.actor.username}">
+                        <span class="avatar avatar-sm" style="width:28px;height:28px;min-width:28px;font-size:12px;"
+                              th:if="${m.actor.profile == null or #strings.isEmpty(m.actor.profile.avatarUrl)}"
+                              th:text="${#strings.substring(m.actor.username,0,1).toUpperCase()}"></span>
+                        <span th:text="${m.actor.username}">usuario</span>
+                    </a>
+                </td>
+                <td class="small" th:text="${m.note}">Motivo</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+</body>
+</html>

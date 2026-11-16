@@ -1,209 +1,144 @@
 <!DOCTYPE html>
-<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<html lang="es" th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Harmony | Solicitudes de bandas</title>
+    <title th:text="#{requests.title}">Harmony | Solicitudes de bandas</title>
+    <link rel="stylesheet" th:href="@{/css/harmony.css}">
     <style>
-        body {
-            margin: 0;
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background: radial-gradient(circle at top, #1d4ed8 0%, #0f172a 55%, #020617 100%);
-            color: #e2e8f0;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 22px 48px;
-            background: rgba(2, 6, 23, 0.75);
-            backdrop-filter: blur(12px);
-            border-bottom: 1px solid rgba(148, 163, 184, 0.15);
-        }
-
-        header h1 {
-            margin: 0;
-            font-size: 26px;
-        }
-
-        .nav-links {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .nav-links a {
-            text-decoration: none;
-            color: #e2e8f0;
-            padding: 10px 18px;
-            border-radius: 999px;
-            background: rgba(148, 163, 184, 0.2);
-            border: 1px solid rgba(148, 163, 184, 0.3);
-            font-weight: 600;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .nav-links a:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 24px rgba(148, 163, 184, 0.25);
-        }
-
-        main {
-            flex: 1;
-            padding: 40px 56px 72px;
-        }
-
-        .alerts {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-            margin-bottom: 24px;
-        }
-
-        .alert {
-            padding: 10px 18px;
-            border-radius: 999px;
-            font-weight: 600;
-            border: 1px solid transparent;
-        }
-
-        .alert.success {
-            background: rgba(22, 163, 74, 0.2);
-            color: #bbf7d0;
-            border-color: rgba(22, 163, 74, 0.4);
-        }
-
-        .alert.error {
-            background: rgba(248, 113, 113, 0.18);
-            color: #fecaca;
-            border-color: rgba(248, 113, 113, 0.35);
-        }
-
         .requests-grid {
             display: grid;
-            gap: 24px;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            margin-bottom: 32px;
         }
-
         .request-card {
-            background: rgba(15, 23, 42, 0.85);
-            border-radius: 20px;
-            padding: 24px;
-            border: 1px solid rgba(148, 163, 184, 0.12);
-            box-shadow: 0 25px 55px rgba(15, 23, 42, 0.5);
+            background: var(--surface);
+            border: 1px solid #51431a;
+            border-radius: 6px;
+            padding: 22px;
             display: flex;
             flex-direction: column;
             gap: 12px;
         }
-
         .request-card h3 {
             margin: 0;
-            font-size: 22px;
+            font-size: 20px;
         }
-
-        .request-card p {
-            margin: 0;
-            color: rgba(226, 232, 240, 0.8);
-            line-height: 1.5;
-        }
-
-        .meta {
+        .request-card .meta {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            color: rgba(148, 163, 184, 0.85);
+            color: #aaa;
             font-size: 13px;
         }
-
-        .actions {
-            display: flex;
-            gap: 12px;
+        .movements-mini {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
         }
-
-        .actions form button {
-            border: none;
-            border-radius: 12px;
-            padding: 10px 18px;
-            font-weight: 700;
-            font-size: 15px;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
+        .movements-mini th, .movements-mini td {
+            text-align: left;
+            padding: 10px 12px;
+            border-bottom: 1px solid #393220;
         }
-
-        .actions form button.approve {
-            background: linear-gradient(135deg, #22d3ee, #6366f1);
-            color: #020617;
-        }
-
-        .actions form button.reject {
-            background: rgba(248, 113, 113, 0.25);
-            color: #fecaca;
-        }
-
-        .actions form button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 30px rgba(99, 102, 241, 0.25);
-        }
-
-        .empty-state {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 32px;
-            background: rgba(15, 23, 42, 0.65);
-            border: 1px dashed rgba(148, 163, 184, 0.4);
-            border-radius: 24px;
-            text-align: center;
-        }
-
-        .empty-state p {
-            color: rgba(226, 232, 240, 0.8);
+        .movements-mini th {
+            color: var(--gold);
+            font-family: Cinzel, Georgia, serif;
+            font-size: 12px;
+            text-transform: uppercase;
         }
     </style>
 </head>
 <body>
-<header>
-    <h1 th:text="'Solicitudes para tus bandas, ' + ${username}">Solicitudes</h1>
-    <div class="nav-links">
-        <a th:href="@{/groups}">Mis bandas</a>
-        <a th:href="@{/home}">Inicio</a>
-    </div>
-</header>
+<nav th:replace="~{fragments :: nav}"></nav>
 <main>
-    <div class="alerts">
-        <span th:if="${requestSuccess}" th:text="${requestSuccess}" class="alert success">Solicitud procesada</span>
-        <span th:if="${requestError}" th:text="${requestError}" class="alert error">Error</span>
-    </div>
+    <div class="notice" role="status" th:if="${requestSuccess}" th:text="${requestSuccess}"></div>
+    <div class="notice" role="status" th:if="${requestError}" th:text="${requestError}"></div>
 
+    <section class="card hero">
+        <span class="eyebrow" th:text="#{movements.eyebrow}">Trazabilidad y auditoría</span>
+        <h1 th:text="#{requests.titleFor(${username})}">Solicitudes</h1>
+        <div class="actions">
+            <a class="btn" th:href="@{/movements(type='GROUP_JOIN_REQUEST')}" th:text="#{requests.viewAllMovements}">Ver tabla completa de movimientos →</a>
+            <a th:href="@{/groups}" th:text="#{nav.bands}">Mis bandas</a>
+        </div>
+    </section>
+
+    <h2 th:text="#{requests.receivedHeading}">Solicitudes recibidas para tus bandas</h2>
     <div th:if="${hasRequests}" class="requests-grid">
         <div th:each="req : ${requests}" class="request-card">
             <div class="meta">
-                <span th:text="${req.groupName}">Nombre de la banda</span>
-                <span th:text="${#temporals.format(req.createdAt, 'dd MMM yyyy HH:mm')}">10 Nov 2025 20:10</span>
+                <span class="pill" th:text="${req.groupName}">Nombre de la banda</span>
+                <span th:text="${#temporals.format(req.createdAt, 'dd/MM/yyyy HH:mm')}">10/11/2025 20:10</span>
             </div>
-            <h3 th:text="${req.requesterUsername}">Usuario solicitante</h3>
-            <p th:text="${req.message != null ? req.message : 'Sin mensaje adicional.'}">
+            <h3><a th:href="@{|/people/${req.requesterId}|}" th:text="${req.requesterUsername}">Usuario solicitante</a></h3>
+            <p th:text="${req.message != null ? req.message : #messages.msg('requests.noMessage')}">
                 Sin mensaje adicional.
             </p>
             <div class="actions">
                 <form th:action="@{|/groups/requests/${req.id}/approve|}" method="post">
-                    <button type="submit" class="approve">Aprobar</button>
+                    <button type="submit" class="active" th:text="#{requests.approve}">Aprobar</button>
                 </form>
                 <form th:action="@{|/groups/requests/${req.id}/reject|}" method="post">
-                    <button type="submit" class="reject">Rechazar</button>
+                    <button type="submit" th:text="#{requests.reject}">Rechazar</button>
                 </form>
             </div>
         </div>
     </div>
+    <div th:if="${!hasRequests}" class="card">
+        <h3 style="margin-top:0" th:text="#{requests.emptyTitle}">No hay solicitudes pendientes</h3>
+        <p class="muted" style="margin-bottom:0" th:text="#{requests.emptyText}">Cuando alguien quiera unirse a tus bandas, verás su mensaje aquí para aprobar o rechazar.</p>
+    </div>
 
-    <div th:if="${!hasRequests}" class="empty-state">
-        <h3>No hay solicitudes pendientes</h3>
-        <p>Cuando alguien quiera unirse a tus bandas, verás su mensaje aquí para aprobar o rechazar.</p>
+    <h2 th:text="#{requests.sentHeading}">Mis solicitudes enviadas</h2>
+    <div th:if="${hasMyRequests}" class="requests-grid">
+        <div th:each="req : ${myRequests}" class="request-card">
+            <div class="meta">
+                <span class="pill" th:text="${req.groupName}">Banda</span>
+                <span class="status status-pending" th:text="${req.status}">PENDING</span>
+            </div>
+            <p th:text="${req.message != null ? req.message : #messages.msg('requests.noMessage')}"></p>
+            <div class="actions">
+                <form th:action="@{|/groups/requests/${req.id}/cancel|}" method="post">
+                    <button type="submit" th:text="#{requests.CancelButton}">Cancelar solicitud</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div th:if="${!hasMyRequests}" class="card">
+        <p class="muted" style="margin:0" th:text="#{requests.sentEmpty}">No tenés solicitudes pendientes enviadas a otras bandas.</p>
+    </div>
+
+    <h2 th:text="#{requests.movementsHeading}">Últimos movimientos de solicitudes (Trazabilidad)</h2>
+    <div class="card" th:if="${#lists.isEmpty(requestMovements)}" th:text="#{movements.empty}"></div>
+    <div class="card" th:if="${!#lists.isEmpty(requestMovements)}" style="overflow-x:auto;">
+        <table class="movements-mini">
+            <thead>
+            <tr>
+                <th th:text="#{movements.col.id}">ID</th>
+                <th th:text="#{movements.col.date}">Fecha y hora</th>
+                <th th:text="#{movements.col.entity}">Entidad afectada</th>
+                <th th:text="#{movements.col.transition}">Transición de estado</th>
+                <th th:text="#{movements.col.actor}">Ejecutado por</th>
+                <th th:text="#{movements.col.note}">Motivo / Observación</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="m : ${requestMovements}">
+                <td class="muted" th:text="'#' + ${m.id}">#1</td>
+                <td class="small" th:text="${#temporals.format(m.createdAt, 'dd/MM/yyyy HH:mm:ss')}"></td>
+                <td th:text="${m.entityLabel}"></td>
+                <td>
+                    <span class="status" th:text="${m.previousStatus != null ? m.previousStatus : #messages.msg('movements.initial')}"></span>
+                    →
+                    <span class="status" th:text="${m.newStatus}"></span>
+                </td>
+                <td><a th:href="@{|/people/${m.actor.id}|}" th:text="${m.actor.username}"></a></td>
+                <td class="small" th:text="${m.note}"></td>
+            </tr>
+            </tbody>
+        </table>
     </div>
 </main>
 </body>
 </html>
-
-

@@ -3,6 +3,16 @@ package com.example.demo.Dtos.Posts;
 import java.time.LocalDateTime;
 
 public class PostFeedResponseDto {
+    private java.util.List<String> tags=java.util.List.of();
+    public java.util.List<String> getTags(){return tags;} public void setTags(java.util.List<String> tags){this.tags=tags;}
+    private Long authorId; private String audioUrl; private String bandName;
+    private String authorAvatarUrl; private String bandAvatarUrl;
+    public Long getAuthorId(){return authorId;} public void setAuthorId(Long id){authorId=id;}
+    public String getAudioUrl(){return audioUrl;} public void setAudioUrl(String s){audioUrl=s;}
+    public String getBandName(){return bandName;} public void setBandName(String s){bandName=s;}
+    public String getAuthorAvatarUrl(){return authorAvatarUrl;} public void setAuthorAvatarUrl(String s){authorAvatarUrl=s;}
+    public String getBandAvatarUrl(){return bandAvatarUrl;} public void setBandAvatarUrl(String s){bandAvatarUrl=s;}
+
 
     private Long id;
     private String title;

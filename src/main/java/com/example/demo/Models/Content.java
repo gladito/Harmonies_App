@@ -14,6 +14,7 @@ public class Content extends BaseEntity {
     private String description;
 
     @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
     private Visibility visibility = Visibility.PUBLIC;
 
     public Content() {

@@ -1,0 +1,41 @@
+<!DOCTYPE html><html lang="es" th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Harmony · Perfil</title><link rel="stylesheet" th:href="@{/css/harmony.css}"></head><body><nav th:replace="~{fragments :: nav}"></nav><main><div class="notice" role="status" th:if="${message}" th:text="${message}"></div>
+<section class="card hero">
+  <div class="hero-header">
+    <img class="avatar-img avatar-lg" th:if="${!#strings.isEmpty(person.avatarUrl)}" th:src="${person.avatarUrl}" th:alt="${person.username}">
+    <div class="avatar avatar-lg" th:if="${#strings.isEmpty(person.avatarUrl)}" th:text="${#strings.substring(person.username,0,1).toUpperCase()}"></div>
+    <div class="hero-header-info">
+      <span class="eyebrow" th:text="#{profile.eyebrow}">Perfil de músico</span>
+      <h1 th:text="${person.username}"></h1>
+      <p th:text="${person.bio} ?: #{profile.emptyBio}"></p>
+      <p th:if="${rating.count > 0}" th:text="#{rating.summary(${#numbers.formatDecimal(rating.average,1,1)},${rating.count})}"></p>
+      <p th:if="${rating.count == 0}" class="muted" th:text="#{profile.noRatings}">Sin calificaciones todavía</p>
+    </div>
+  </div>
+</section>
+<div class="layout"><section><h2 th:text="#{profile.posts}">Publicaciones</h2><div class="card" th:if="${#lists.isEmpty(posts)}" th:text="#{posts.empty}">Todavía no hay publicaciones visibles.</div><article class="card" th:each="p : ${posts}"><h3><a th:href="@{|/posts/${p.id}|}" th:text="${p.title}"></a></h3><p th:text="${p.description}"></p><audio controls preload="none" th:src="${p.audioUrl}"></audio></article></section>
+<aside>
+<div class="card" th:if="${mine}">
+  <h2 th:text="#{profile.presentation}">Tu presentación</h2>
+  <form th:action="@{/profile/bio}" method="post">
+    <label for="bio" th:text="#{profile.bio}">Biografía</label>
+    <textarea id="bio" name="bio" maxlength="160" th:text="${person.bio}"></textarea>
+    <button th:text="#{common.save}">Guardar</button>
+  </form>
+  <hr>
+  <h3 th:text="#{profile.avatarHeading}">Foto de perfil</h3>
+  <form th:action="@{/profile/avatar}" method="post" enctype="multipart/form-data">
+    <label for="avatarFile" th:text="#{profile.avatarUpload}">Subir imagen (PNG, JPG, WEBP, GIF)</label>
+    <input id="avatarFile" type="file" name="avatarFile" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml">
+    <label for="avatarUrl" th:text="#{profile.avatarUrl}">O pegar enlace de imagen (https://...)</label>
+    <input id="avatarUrl" type="text" name="avatarUrl" maxlength="255" th:value="${person.avatarUrl}" placeholder="https://...">
+    <button type="submit" th:text="#{profile.avatarSave}">Guardar foto</button>
+  </form>
+  <form th:if="${!#strings.isEmpty(person.avatarUrl)}" th:action="@{/profile/avatar}" method="post" style="margin-top:10px">
+    <input type="hidden" name="remove" value="true">
+    <button type="submit" th:text="#{profile.avatarRemove}">Quitar foto actual</button>
+  </form>
+  <hr>
+  <a th:href="@{/account}" th:text="#{profile.account}">Cambiar usuario o contraseña →</a>
+</div>
+<div class="card" th:if="${!mine and !blockedByMe}"><h2 th:text="#{profile.rate}">Calificar perfil</h2><form th:action="@{|/people/${person.id}/rating|}" method="post"><label for="score" th:text="#{profile.yourRating}">Tu calificación</label><select id="score" name="score"><option th:each="n : ${#numbers.sequence(1,5)}" th:value="${n}" th:text="#{rating.stars(${n})}" th:selected="${rating.mine == n}"></option></select><button th:text="#{profile.saveRating}">Guardar calificación</button></form><form th:if="${rating.mine > 0}" th:action="@{|/people/${person.id}/rating|}" method="post"><input type="hidden" name="score" value="0"><button th:text="#{profile.removeRating}">Retirar calificación</button></form></div>
+<div class="card" th:if="${!mine}"><h3 th:text="#{profile.privacy}">Privacidad</h3><p class="muted" th:text="#{profile.blockInfo}">Bloquear impide que esta persona vea tu perfil y tus publicaciones dentro de Harmony.</p><form th:action="@{|/people/${person.id}/block|}" method="post"><input type="hidden" name="blocked" th:value="${!blockedByMe}"><button th:text="${blockedByMe} ? #{profile.unblock} : #{profile.block}"></button></form></div></aside></div></main></body></html>

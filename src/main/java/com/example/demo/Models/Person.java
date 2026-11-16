@@ -1,11 +1,13 @@
 package com.example.demo.Models;
 
 import jakarta.persistence.Column;
-import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 
 import java.time.LocalDate;
 
-@MappedSuperclass
+@Entity
+@Table(name = "persons")
 public class Person extends BaseEntity {
 
     @Column(nullable = false, length = 80)

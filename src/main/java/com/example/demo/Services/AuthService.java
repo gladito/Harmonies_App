@@ -34,6 +34,7 @@ public class AuthService {
             throw new IllegalArgumentException("El nombre de usuario ya está en uso");
         }
 
+        validatePasswordPolicy(registerRequest.getPassword());
         String encodedPassword = passwordEncoder.encode(registerRequest.getPassword());
 
         User newUser = new User(
@@ -58,7 +59,7 @@ public class AuthService {
         }
 
         User user = userRepository.findByEmailAndDeletedFalse(loginRequest.getEmail())
-                .orElseThrow(() -> new IllegalArgumentException("No existe un usuario con ese email"));
+                .orElseThrow(() -> new IllegalArgumentException("Las credenciales no son válidas"));
 
         if (!user.isEnabled()) {
             throw new IllegalStateException("La cuenta está deshabilitada");
@@ -76,7 +77,7 @@ public class AuthService {
         User user = userRepository.findByIdAndDeletedFalse(userId)
                 .orElseThrow(() -> new IllegalArgumentException("No se encontró el usuario."));
 
-        if (isBlank(newUsername)) {
+        if (isBlank(newUsername) || newUsername.length() > 40) {
             throw new IllegalArgumentException("El nombre de usuario no puede estar vacío.");
         }
         if (!newUsername.equals(user.getUsername())
@@ -91,20 +92,20 @@ public class AuthService {
     private void validateRegisterRequest(AuthRegisterRequestDto registerRequest) {
         Objects.requireNonNull(registerRequest, "La solicitud de registro es obligatoria");
 
-        if (isBlank(registerRequest.getFirstName())) {
+        if (isBlank(registerRequest.getFirstName()) || registerRequest.getFirstName().length() > 80) {
             throw new IllegalArgumentException("El nombre es obligatorio");
         }
-        if (isBlank(registerRequest.getLastName())) {
+        if (isBlank(registerRequest.getLastName()) || registerRequest.getLastName().length() > 80) {
             throw new IllegalArgumentException("El apellido es obligatorio");
         }
         LocalDate birthDate = registerRequest.getBirthDate();
-        if (birthDate == null) {
+        if (birthDate == null || birthDate.isAfter(LocalDate.now())) {
             throw new IllegalArgumentException("La fecha de nacimiento es obligatoria");
         }
-        if (isBlank(registerRequest.getUsername())) {
+        if (isBlank(registerRequest.getUsername()) || registerRequest.getUsername().length() > 40) {
             throw new IllegalArgumentException("El nombre de usuario es obligatorio");
         }
-        if (isBlank(registerRequest.getEmail())) {
+        if (isBlank(registerRequest.getEmail()) || !registerRequest.getEmail().matches("[^@\\s]+@[^@\\s]+\\.[^@\\s]+") || registerRequest.getEmail().length() > 254) {
             throw new IllegalArgumentException("El email es obligatorio");
         }
         if (isBlank(registerRequest.getPassword())) {
@@ -145,8 +146,8 @@ public class AuthService {
     private void validatePasswordPolicy(String newPassword) {
         boolean hasUppercase = newPassword.chars().anyMatch(Character::isUpperCase);
         boolean hasDigit = newPassword.chars().anyMatch(Character::isDigit);
-        if (!hasUppercase || !hasDigit) {
-            throw new IllegalArgumentException("La contraseña debe contener al menos una letra mayúscula y un número.");
+        if (newPassword.length() < 8 || newPassword.length() > 72 || !hasUppercase || !hasDigit) {
+            throw new IllegalArgumentException("La contraseña debe tener de 8 a 72 caracteres, una mayúscula y un número.");
         }
     }
 }
