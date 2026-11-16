@@ -29,6 +29,8 @@ public class StudioService {
     private final CommunityService community;
     @Autowired
     private StateMovementService movementService;
+    @Autowired
+    private PaymentService paymentService;
 
     public StudioService(CommunityService community) {
         this.community = community;
@@ -85,11 +87,23 @@ public class StudioService {
                         "Reserva cancelada por baja de la sala"
                 );
             }
+            if (paymentService != null) {
+                paymentService.refundOrCancelForReference(
+                        PaymentConceptType.STUDIO_BOOKING,
+                        b.getId(),
+                        owner,
+                        "Cancelación por baja de la sala " + s.getName()
+                );
+            }
         }
         s.markAsDeleted();
     }
 
     public StudioBooking book(Long actor, Long studioId, String start, Integer hours) {
+        return book(actor, studioId, start, hours, PaymentMethod.MERCADO_PAGO, true);
+    }
+
+    public StudioBooking book(Long actor, Long studioId, String start, Integer hours, PaymentMethod method, boolean payNow) {
         User user = community.user(actor);
         Studio s = lock(studioId);
         studio(studioId, actor);
@@ -121,6 +135,18 @@ public class StudioService {
                     "Reserva confirmada por " + hours + " h"
             );
         }
+        if (paymentService != null) {
+            paymentService.createOrder(
+                    PaymentConceptType.STUDIO_BOOKING,
+                    booking.getId(),
+                    "Reserva de sala: " + s.getName() + " (" + hours + " h)",
+                    booking.getTotalPrice(),
+                    method != null ? method : PaymentMethod.MERCADO_PAGO,
+                    payNow,
+                    user,
+                    s.getOwner()
+            );
+        }
         return booking;
     }
 
@@ -147,6 +173,14 @@ public class StudioService {
                     b.getStatus().name(),
                     actorUser,
                     note
+            );
+        }
+        if (paymentService != null) {
+            paymentService.refundOrCancelForReference(
+                    PaymentConceptType.STUDIO_BOOKING,
+                    b.getId(),
+                    actorUser,
+                    "Cancelación de reserva en " + b.getStudio().getName()
             );
         }
     }

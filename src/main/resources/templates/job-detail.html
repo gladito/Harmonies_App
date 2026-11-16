@@ -40,9 +40,15 @@
                 <h2 th:text="#{application.received}">Postulaciones recibidas</h2>
                 <p class="muted" th:if="${#lists.isEmpty(applications)}" th:text="#{application.none}">Todavía nadie se postuló.</p>
                 <div class="member" th:each="a : ${applications}">
-                    <a th:href="@{|/people/${a.applicant.id}|}" th:text="${a.applicant.username}"></a>
-                    <span class="status" th:classappend="|status-${#strings.toLowerCase(a.status)}|" th:text="#{${'application.status.' + a.status}}"></span>
+                    <div class="actions" style="gap:8px">
+                        <a th:href="@{|/people/${a.applicant.id}|}" th:text="${a.applicant.username}"></a>
+                        <span class="status" th:classappend="|status-${#strings.toLowerCase(a.status)}|" th:text="#{${'application.status.' + a.status}}"></span>
+                        <span class="status" th:if="${appPayments[a.id] != null}"
+                              th:classappend="${appPayments[a.id].status.name() == 'PAID'} ? 'status-confirmed' : 'status-pending'"
+                              th:text="#{${'payment.status.' + appPayments[a.id].status}}"></span>
+                    </div>
                     <p class="small" th:text="${a.message} ?: #{application.noMessage}"></p>
+
                     <div class="actions" th:if="${a.status.name() == 'PENDING'}">
                         <form th:action="@{|/jobs/${job.id}/applications/${a.id}|}" method="post">
                             <input type="hidden" name="accept" value="true"><button th:text="#{application.accept}">Aceptar</button>
@@ -51,6 +57,29 @@
                             <input type="hidden" name="accept" value="false"><button th:text="#{application.reject}">Rechazar</button>
                         </form>
                     </div>
+
+                    <div class="card" style="margin-top:12px;background:#0d0d0d"
+                         th:if="${appPayments[a.id] != null and appPayments[a.id].status.name() == 'PENDING_PAYMENT'}">
+                        <h3 style="margin:0 0 8px;font-size:16px" th:text="#{payments.contractPayHeading}">Pago de la contratación</h3>
+                        <form th:action="@{|/payments/${appPayments[a.id].id}/pay|}" method="post">
+                            <input type="hidden" name="back" th:value="|/jobs/${job.id}|">
+                            <label th:text="#{payments.amountLabel}">Monto a abonar ($)</label>
+                            <input type="number" name="amount" min="100" max="10000000" required th:value="${appPayments[a.id].amount}">
+                            <label th:text="#{payments.methodLabel}">Método de pago</label>
+                            <select name="paymentMethod">
+                                <option th:each="m : ${methods}" th:value="${m}"
+                                        th:selected="${appPayments[a.id].paymentMethod == m}"
+                                        th:text="#{${'payment.method.' + m}}"></option>
+                            </select>
+                            <button type="submit" class="active" th:text="#{payments.payButton}">Confirmar y abonar</button>
+                        </form>
+                    </div>
+
+                    <p class="small muted" th:if="${appPayments[a.id] != null and appPayments[a.id].status.name() == 'PAID'}">
+                        <span th:text="#{${'payment.method.' + appPayments[a.id].paymentMethod}}"></span> ·
+                        <strong th:text="|$ ${#numbers.formatInteger(appPayments[a.id].amount,1,'POINT')}|"></strong> ·
+                        <span th:text="|#{payments.receipt} ${appPayments[a.id].receiptCode}|"></span>
+                    </p>
                 </div>
             </div>
         </section>
@@ -67,8 +96,18 @@
 
             <div class="card" th:if="${mine != null}">
                 <h2 th:text="#{application.yours}">Tu postulación</h2>
-                <span class="status" th:classappend="|status-${#strings.toLowerCase(mine.status)}|" th:text="#{${'application.status.' + mine.status}}"></span>
+                <div class="actions" style="gap:8px;margin-bottom:8px">
+                    <span class="status" th:classappend="|status-${#strings.toLowerCase(mine.status)}|" th:text="#{${'application.status.' + mine.status}}"></span>
+                    <span class="status" th:if="${myPayment != null}"
+                          th:classappend="${myPayment.status.name() == 'PAID'} ? 'status-confirmed' : 'status-pending'"
+                          th:text="#{${'payment.status.' + myPayment.status}}"></span>
+                </div>
                 <p class="small" th:text="${mine.message} ?: #{application.noMessage}"></p>
+                <p class="small muted" th:if="${myPayment != null and myPayment.receiptCode != null}">
+                    <strong th:text="|$ ${#numbers.formatInteger(myPayment.amount,1,'POINT')}|"></strong> ·
+                    <span th:text="#{${'payment.method.' + myPayment.paymentMethod}}"></span> ·
+                    <span th:text="|#{payments.receipt} ${myPayment.receiptCode}|"></span>
+                </p>
             </div>
 
             <div class="card" th:if="${isAuthor}">

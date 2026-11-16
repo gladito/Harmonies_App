@@ -1,0 +1,23 @@
+CREATE TABLE `payments` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `created_at` datetime(6) NOT NULL,
+  `updated_at` datetime(6) NOT NULL,
+  `deleted` bit NOT NULL,
+  `deleted_at` datetime(6),
+  `concept_type` varchar(32) NOT NULL,
+  `reference_id` bigint NOT NULL,
+  `description` varchar(180) NOT NULL,
+  `amount` int NOT NULL,
+  `payment_method` varchar(32) NOT NULL,
+  `status` varchar(32) NOT NULL,
+  `receipt_code` varchar(64) NULL,
+  `payer_user_id` bigint NOT NULL,
+  `recipient_user_id` bigint NOT NULL,
+  `paid_at` datetime(6) NULL,
+  PRIMARY KEY (`id`),
+  CONSTRAINT `fk_payments_payer` FOREIGN KEY (`payer_user_id`) REFERENCES `users` (`id`),
+  CONSTRAINT `fk_payments_recipient` FOREIGN KEY (`recipient_user_id`) REFERENCES `users` (`id`),
+  INDEX `ix_payments_reference` (`concept_type`, `reference_id`),
+  INDEX `ix_payments_payer` (`payer_user_id`, `created_at`),
+  INDEX `ix_payments_recipient` (`recipient_user_id`, `created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

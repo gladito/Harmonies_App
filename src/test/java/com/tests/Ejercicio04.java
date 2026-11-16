@@ -1,6 +1,8 @@
 package com.tests;
 
 import com.microsoft.playwright.Locator;
+import com.microsoft.playwright.Page;
+import com.microsoft.playwright.options.AriaRole;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -29,5 +31,8 @@ public class Ejercicio04 extends BaseTest {
 
         assertEquals("gladito@example.test", emailIngresado);
         assertEquals("Harmony123", passwordIngresado);
+
+        // 5. Enviar el formulario para visualizar el ingreso en el video
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Iniciar sesión")).click();
     }
 }

@@ -22,6 +22,8 @@ public class JobService {
     private final CommunityService community;
     @Autowired
     private StateMovementService movementService;
+    @Autowired
+    private PaymentService paymentService;
 
     public JobService(CommunityService community) {
         this.community = community;
@@ -120,6 +122,19 @@ public class JobService {
                     a.getStatus().name(),
                     author,
                     accept ? "Postulación aceptada por el autor del aviso" : "Postulación rechazada por el autor del aviso"
+            );
+        }
+        if (accept && paymentService != null) {
+            int estimatedAmount = PaymentService.parseAmountFromPayText(a.getJob().getPay());
+            paymentService.createOrder(
+                    PaymentConceptType.JOB_CONTRACT,
+                    a.getId(),
+                    "Contratación: " + a.getJob().getTitle() + " (" + a.getApplicant().getUsername() + ")",
+                    estimatedAmount,
+                    PaymentMethod.MERCADO_PAGO,
+                    false,
+                    author,
+                    a.getApplicant()
             );
         }
     }

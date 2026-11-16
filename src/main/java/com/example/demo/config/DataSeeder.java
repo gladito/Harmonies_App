@@ -26,6 +26,7 @@ public class DataSeeder implements CommandLineRunner {
     private final com.example.demo.Services.JobService jobService;
     private final com.example.demo.Services.StateMovementService movementService;
     private final com.example.demo.Services.GroupJoinRequestService joinRequestService;
+    private final com.example.demo.Services.PaymentService paymentService;
     private final UserRepository userRepository;
     private final PostRepository postRepository;
     private final GroupRepository groupRepository;
@@ -37,6 +38,7 @@ public class DataSeeder implements CommandLineRunner {
                       com.example.demo.Services.JobService jobService,
                       com.example.demo.Services.StateMovementService movementService,
                       com.example.demo.Services.GroupJoinRequestService joinRequestService,
+                      com.example.demo.Services.PaymentService paymentService,
                       UserRepository userRepository,
                       PostRepository postRepository,
                       GroupRepository groupRepository,
@@ -47,6 +49,7 @@ public class DataSeeder implements CommandLineRunner {
         this.jobService = jobService;
         this.movementService = movementService;
         this.joinRequestService = joinRequestService;
+        this.paymentService = paymentService;
         this.userRepository = userRepository;
         this.postRepository = postRepository;
         this.groupRepository = groupRepository;
@@ -67,6 +70,63 @@ public class DataSeeder implements CommandLineRunner {
         }
         if (em.createQuery("select count(m) from StateMovement m", Long.class).getSingleResult() == 0) {
             seedSampleRequestsAndBackfillMovements();
+        }
+        if (em.createQuery("select count(p) from Payment p", Long.class).getSingleResult() == 0) {
+            seedSamplePayments();
+        }
+    }
+
+    private void seedSamplePayments() {
+        PaymentMethod[] methods = PaymentMethod.values();
+        int idx = 0;
+        for (StudioBooking b : em.createQuery("select b from StudioBooking b join fetch b.user join fetch b.studio s join fetch s.owner", StudioBooking.class).getResultList()) {
+            if (paymentService.findByReference(PaymentConceptType.STUDIO_BOOKING, b.getId()).isEmpty()) {
+                PaymentMethod method = methods[idx % methods.length];
+                boolean payImmediately = (idx % 3 != 2); // Deja al menos una reserva pendiente de pago para demostrar el flujo
+                Payment p = paymentService.createOrder(
+                        PaymentConceptType.STUDIO_BOOKING,
+                        b.getId(),
+                        "Reserva de sala: " + b.getStudio().getName() + " (" + b.getHours() + " h)",
+                        b.getTotalPrice(),
+                        method,
+                        payImmediately,
+                        b.getUser(),
+                        b.getStudio().getOwner()
+                );
+                if (b.getStatus() == BookingStatus.CANCELLED) {
+                    paymentService.refundOrCancelForReference(PaymentConceptType.STUDIO_BOOKING, b.getId(), b.getUser(), "Cancelación de reserva");
+                }
+                idx++;
+            }
+        }
+        for (JobApplication a : em.createQuery("select a from JobApplication a join fetch a.applicant join fetch a.job j join fetch j.author where a.status=:st", JobApplication.class)
+                .setParameter("st", ApplicationStatus.ACCEPTED).getResultList()) {
+            if (paymentService.findByReference(PaymentConceptType.JOB_CONTRACT, a.getId()).isEmpty()) {
+                int amt = com.example.demo.Services.PaymentService.parseAmountFromPayText(a.getJob().getPay());
+                paymentService.createOrder(
+                        PaymentConceptType.JOB_CONTRACT,
+                        a.getId(),
+                        "Contratación: " + a.getJob().getTitle() + " (" + a.getApplicant().getUsername() + ")",
+                        amt,
+                        PaymentMethod.BANK_TRANSFER,
+                        true,
+                        a.getJob().getAuthor(),
+                        a.getApplicant()
+                );
+            }
+        }
+        // Además, si Gladito publicó el aviso de "Busco profe de síntesis modular", aceptamos la postulación de nicofontana y dejamos el pago en PENDING_PAYMENT para que Gladito pueda pagarlo en vivo
+        User gladito = demoUser("gladito");
+        if (gladito != null) {
+            for (JobPosting j : jobService.myPostings(gladito.getId())) {
+                for (JobApplication a : jobService.applications(j.getId(), gladito.getId())) {
+                    if (a.getStatus() == ApplicationStatus.PENDING) {
+                        try {
+                            jobService.decide(gladito.getId(), a.getId(), true);
+                        } catch (Exception ignored) {}
+                    }
+                }
+            }
         }
     }
 

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="es" th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="#{payments.pageTitle}">Harmony · Pagos y Comprobantes</title>
+    <link rel="stylesheet" th:href="@{/css/harmony.css}">
+</head>
+<body>
+<nav th:replace="~{fragments :: nav}"></nav>
+<main>
+    <div class="notice" role="status" th:if="${message}" th:text="${message}"></div>
+
+    <section class="card hero">
+        <span class="eyebrow" th:text="#{payments.eyebrow}">Circuito de cobros y pagos</span>
+        <h1 th:text="#{payments.title}">Pagos, Contrataciones y Comprobantes</h1>
+        <p th:text="#{payments.intro}">Administrá los pagos de reservas de salas y contrataciones de la bolsa de trabajo con trazabilidad en state_movements.</p>
+        <div class="actions">
+            <a class="btn" th:href="@{/movements(type='PAYMENT')}" th:text="#{payments.viewMovements}">Ver trazabilidad de pagos en Movimientos →</a>
+        </div>
+    </section>
+
+    <section class="grid-cards" style="margin-bottom:28px;">
+        <article class="card">
+            <span class="eyebrow" th:text="#{payments.totalPaid}">Total abonado</span>
+            <p class="price big" th:text="|$ ${#numbers.formatInteger(totalPaid,1,'POINT')}|">$ 0</p>
+        </article>
+        <article class="card">
+            <span class="eyebrow" th:text="#{payments.totalReceived}">Total cobrado</span>
+            <p class="price big" th:text="|$ ${#numbers.formatInteger(totalReceived,1,'POINT')}|">$ 0</p>
+        </article>
+        <article class="card">
+            <span class="eyebrow" th:text="#{payments.totalPending}">Pendiente de pago</span>
+            <p class="price big" th:text="|$ ${#numbers.formatInteger(totalPending,1,'POINT')}|">$ 0</p>
+        </article>
+    </section>
+
+    <h2 th:text="#{payments.pendingHeading}">Órdenes pendientes de pago</h2>
+    <div class="card" th:if="${#lists.isEmpty(pendingToPay)}" th:text="#{payments.pendingEmpty}">
+        No tenés pagos pendientes por abonar.
+    </div>
+    <div class="grid-cards" th:if="${!#lists.isEmpty(pendingToPay)}" style="margin-bottom:32px;">
+        <article class="card" th:each="p : ${pendingToPay}">
+            <div class="actions" style="justify-content:space-between;">
+                <span class="pill" th:text="#{${'payment.concept.' + p.conceptType}}">Concepto</span>
+                <span class="status status-pending" th:text="#{${'payment.status.' + p.status}}">Pendiente</span>
+            </div>
+            <h3 style="margin:10px 0 4px;" th:text="${p.description}">Descripción</h3>
+            <p class="small muted">
+                <a th:href="@{|/people/${p.recipient.id}|}" th:text="${p.recipient.username}"></a>
+            </p>
+            <form th:action="@{|/payments/${p.id}/pay|}" method="post" style="margin-top:10px;">
+                <label th:text="#{payments.amountLabel}">Monto a abonar ($)</label>
+                <input type="number" name="amount" min="100" max="10000000" required th:value="${p.amount}">
+                <label th:text="#{payments.methodLabel}">Método de pago</label>
+                <select name="paymentMethod">
+                    <option th:each="m : ${methods}" th:value="${m}"
+                            th:selected="${p.paymentMethod == m}"
+                            th:text="#{${'payment.method.' + m}}"></option>
+                </select>
+                <button type="submit" class="active" th:text="#{payments.payButton}">Confirmar y abonar</button>
+            </form>
+        </article>
+    </div>
+
+    <div class="layout">
+        <section>
+            <h2 th:text="#{payments.outgoingHeading}">Pagos emitidos</h2>
+            <div class="card" th:if="${#lists.isEmpty(outgoing)}" th:text="#{payments.outgoingEmpty}">Todavía no emitiste pagos.</div>
+            <article class="card" th:each="p : ${outgoing}">
+                <div class="actions" style="justify-content:space-between;">
+                    <span class="pill" th:text="#{${'payment.concept.' + p.conceptType}}"></span>
+                    <span class="status"
+                          th:classappend="${p.status.name() == 'PAID'} ? 'status-confirmed' : (${p.status.name() == 'PENDING_PAYMENT'} ? 'status-pending' : 'status-cancelled')"
+                          th:text="#{${'payment.status.' + p.status}}"></span>
+                </div>
+                <h3 style="margin:8px 0 4px;" th:text="${p.description}"></h3>
+                <p class="price" th:text="|$ ${#numbers.formatInteger(p.amount,1,'POINT')}|"></p>
+                <p class="small muted">
+                    <span th:text="#{${'payment.method.' + p.paymentMethod}}"></span> ·
+                    <a th:href="@{|/people/${p.recipient.id}|}" th:text="${p.recipient.username}"></a>
+                    <span th:if="${p.receiptCode != null}" th:text="| · #{payments.receipt} ${p.receiptCode}|"></span>
+                </p>
+            </article>
+        </section>
+
+        <aside>
+            <h2 th:text="#{payments.incomingHeading}">Pagos recibidos</h2>
+            <div class="card" th:if="${#lists.isEmpty(incoming)}" th:text="#{payments.incomingEmpty}">Todavía no recibiste cobros.</div>
+            <article class="card" th:each="p : ${incoming}">
+                <div class="actions" style="justify-content:space-between;">
+                    <span class="pill" th:text="#{${'payment.concept.' + p.conceptType}}"></span>
+                    <span class="status"
+                          th:classappend="${p.status.name() == 'PAID'} ? 'status-confirmed' : (${p.status.name() == 'PENDING_PAYMENT'} ? 'status-pending' : 'status-cancelled')"
+                          th:text="#{${'payment.status.' + p.status}}"></span>
+                </div>
+                <h3 style="margin:8px 0 4px;" th:text="${p.description}"></h3>
+                <p class="price" th:text="|$ ${#numbers.formatInteger(p.amount,1,'POINT')}|"></p>
+                <p class="small muted">
+                    <a th:href="@{|/people/${p.payer.id}|}" th:text="${p.payer.username}"></a> ·
+                    <span th:text="#{${'payment.method.' + p.paymentMethod}}"></span>
+                    <span th:if="${p.receiptCode != null}" th:text="| · #{payments.receipt} ${p.receiptCode}|"></span>
+                </p>
+            </article>
+        </aside>
+    </div>
+</main>
+</body>
+</html>

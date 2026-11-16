@@ -10,20 +10,20 @@ import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertTha
 public class Ejercicio03 extends BaseTest {
 
     @Test
-    void hacerClicEnLinkDeRegistro() {
-        // 1. Navegar a la página de login de Harmony
-        page.navigate(BASE_URL + "/login");
+    void hacerClicEnLinkDeLoginDesdeIndex() {
+        // 1. Navegar a la portada principal (index) de Harmony
+        page.navigate(BASE_URL + "/");
 
-        // 2. Localizar el link real del sitio usando getByRole(AriaRole.LINK) y setName(...)
-        Locator linkCrearCuenta = page.getByRole(
+        // 2. Localizar el botón/link "Iniciar sesión →" en el index usando getByRole(AriaRole.LINK) y setName(...)
+        Locator linkIniciarSesion = page.getByRole(
                 AriaRole.LINK,
-                new Page.GetByRoleOptions().setName("Crea una ahora")
-        );
+                new Page.GetByRoleOptions().setName("Iniciar sesión →")
+        ).first();
 
-        // 3. Ejecutar click() sobre el link
-        linkCrearCuenta.click();
+        // 3. Ejecutar click() sobre el link para ir al Login
+        linkIniciarSesion.click();
 
-        // 4. Verificar con assertThat(page).hasURL() la URL de la página destino
-        assertThat(page).hasURL(BASE_URL + "/register");
+        // 4. Verificar con assertThat(page).hasURL() que llegó a la pantalla de login (/login)
+        assertThat(page).hasURL(BASE_URL + "/login");
     }
 }

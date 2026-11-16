@@ -39,12 +39,31 @@
                 <h2 th:text="#{studio.schedule}">Horarios ocupados</h2>
                 <p class="muted" th:if="${#lists.isEmpty(upcoming)}" th:text="#{studio.scheduleEmpty}">No hay reservas próximas: toda la agenda está libre.</p>
                 <div class="member" th:each="b : ${upcoming}">
-                    <strong th:text="${#temporals.format(b.startAt,'EEE dd/MM HH:mm')} + ' – ' + ${#temporals.format(b.endAt,'HH:mm')}"></strong>
-                    <span class="pill" th:if="${b.user.id == me}" th:text="#{booking.yours}">Tu reserva</span>
-                    <p class="small" th:if="${isOwner}">
+                    <div class="actions" style="gap:8px">
+                        <strong th:text="${#temporals.format(b.startAt,'EEE dd/MM HH:mm')} + ' – ' + ${#temporals.format(b.endAt,'HH:mm')}"></strong>
+                        <span class="pill" th:if="${b.user.id == me}" th:text="#{booking.yours}">Tu reserva</span>
+                        <span class="status" th:if="${bookingPayments[b.id] != null}"
+                              th:classappend="${bookingPayments[b.id].status.name() == 'PAID'} ? 'status-confirmed' : 'status-pending'"
+                              th:text="#{${'payment.status.' + bookingPayments[b.id].status}}"></span>
+                    </div>
+                    <p class="small" th:if="${isOwner or b.user.id == me}">
                         <a th:href="@{|/people/${b.user.id}|}" th:text="${b.user.username}"></a> ·
                         <span th:text="#{booking.total(${#numbers.formatInteger(b.totalPrice,1,'POINT')})}"></span>
+                        <span th:if="${bookingPayments[b.id] != null and bookingPayments[b.id].receiptCode != null}"
+                              class="muted" th:text="| · #{payments.receipt} ${bookingPayments[b.id].receiptCode}|"></span>
                     </p>
+                    <form th:if="${b.user.id == me and bookingPayments[b.id] != null and bookingPayments[b.id].status.name() == 'PENDING_PAYMENT'}"
+                          th:action="@{|/payments/${bookingPayments[b.id].id}/pay|}" method="post" style="margin:8px 0">
+                        <input type="hidden" name="back" th:value="|/studios/${studio.id}|">
+                        <div class="actions">
+                            <select name="paymentMethod" style="width:auto;margin:0">
+                                <option th:each="m : ${methods}" th:value="${m}"
+                                        th:selected="${bookingPayments[b.id].paymentMethod == m}"
+                                        th:text="#{${'payment.method.' + m}}"></option>
+                            </select>
+                            <button type="submit" class="active" th:text="#{payments.payButton}">Confirmar y abonar</button>
+                        </div>
+                    </form>
                     <form th:if="${b.upcoming and (isOwner or b.user.id == me)}" th:action="@{|/studios/bookings/${b.id}/cancel|}" method="post" th:attr="data-confirm=#{booking.confirmCancel}">
                         <input type="hidden" name="back" th:value="|/studios/${studio.id}|">
                         <button th:text="#{booking.cancel}">Cancelar reserva</button>
@@ -64,9 +83,16 @@
                         <option th:each="h : ${#numbers.sequence(1, maxHours)}" th:value="${h}" th:selected="${h == 2}"
                                 th:text="#{booking.hoursOption(${h},${#numbers.formatInteger(h * studio.hourlyRate,1,'POINT')})}"></option>
                     </select>
+                    <label for="paymentMethod" th:text="#{payments.methodLabel}">Método de pago</label>
+                    <select id="paymentMethod" name="paymentMethod">
+                        <option th:each="m : ${methods}" th:value="${m}" th:text="#{${'payment.method.' + m}}"></option>
+                    </select>
+                    <label style="display:flex;align-items:center;gap:8px;margin-bottom:14px;cursor:pointer;">
+                        <input type="checkbox" name="payNow" value="true" checked>
+                        <span th:text="#{payments.payNowCheck}">Abonar ahora en el acto y emitir comprobante</span>
+                    </label>
                     <button th:text="#{booking.submit}">Confirmar reserva</button>
                 </form>
-                <p class="small muted" th:text="#{booking.noPayments}">Harmony no cobra la reserva: el pago se coordina con la sala.</p>
             </div>
 
             <div class="card" th:if="${isOwner}">

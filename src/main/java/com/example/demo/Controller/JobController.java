@@ -1,12 +1,18 @@
 package com.example.demo.Controller;
 
+import com.example.demo.Models.JobApplication;
 import com.example.demo.Models.JobType;
+import com.example.demo.Models.PaymentConceptType;
+import com.example.demo.Models.PaymentMethod;
 import com.example.demo.Services.JobService;
+import com.example.demo.Services.PaymentService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.util.List;
 
 /** Bolsa de trabajo: avisos para contratar músicos y postulaciones. */
 @Controller
@@ -14,9 +20,11 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class JobController {
 
     private final JobService jobs;
+    private final PaymentService payments;
 
-    public JobController(JobService jobs) {
+    public JobController(JobService jobs, PaymentService payments) {
         this.jobs = jobs;
+        this.payments = payments;
     }
 
     private Long actor(HttpSession s) { return (Long) s.getAttribute("userId"); }
@@ -24,10 +32,15 @@ public class JobController {
     @GetMapping
     public String list(@RequestParam(required = false) String type, HttpSession s, Model m) {
         JobType filter = StudioController.parse(JobType.class, type);
+        List<JobApplication> myApps = jobs.myApplications(actor(s));
         m.addAttribute("jobs", jobs.list(actor(s), filter));
         m.addAttribute("types", JobType.values());
         m.addAttribute("type", filter);
-        m.addAttribute("applications", jobs.myApplications(actor(s)));
+        m.addAttribute("applications", myApps);
+        m.addAttribute("appPayments", payments.mapByReferences(
+                PaymentConceptType.JOB_CONTRACT,
+                myApps.stream().map(JobApplication::getId).toList()
+        ));
         m.addAttribute("postings", jobs.myPostings(actor(s)));
         return "jobs";
     }
@@ -35,10 +48,20 @@ public class JobController {
     @GetMapping("/{id}")
     public String detail(@PathVariable Long id, HttpSession s, Model m) {
         var job = jobs.job(id, actor(s));
+        var mine = jobs.myApplication(id, actor(s)).orElse(null);
+        List<JobApplication> apps = jobs.applications(id, actor(s));
         m.addAttribute("job", job);
         m.addAttribute("isAuthor", job.getAuthor().getId().equals(actor(s)));
-        m.addAttribute("mine", jobs.myApplication(id, actor(s)).orElse(null));
-        m.addAttribute("applications", jobs.applications(id, actor(s)));
+        m.addAttribute("mine", mine);
+        m.addAttribute("myPayment", mine != null
+                ? payments.findByReference(PaymentConceptType.JOB_CONTRACT, mine.getId()).orElse(null)
+                : null);
+        m.addAttribute("applications", apps);
+        m.addAttribute("appPayments", payments.mapByReferences(
+                PaymentConceptType.JOB_CONTRACT,
+                apps.stream().map(JobApplication::getId).toList()
+        ));
+        m.addAttribute("methods", PaymentMethod.values());
         return "job-detail";
     }
 

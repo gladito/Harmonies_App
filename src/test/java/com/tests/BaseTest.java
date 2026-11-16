@@ -69,9 +69,11 @@ public class BaseTest {
         playwright = Playwright.create();
 
         boolean headless = Boolean.parseBoolean(System.getProperty("headless", "false"));
+        double slowMo = Double.parseDouble(System.getProperty("slowMo", "1500"));
         browser = playwright.chromium().launch(
                 new BrowserType.LaunchOptions()
                         .setHeadless(headless)
+                        .setSlowMo(slowMo)
         );
 
         context = browser.newContext();
@@ -80,6 +82,11 @@ public class BaseTest {
 
     @AfterEach
     void tearDown() {
+        if (page != null && ! Boolean.parseBoolean(System.getProperty("headless", "false"))) {
+            try {
+                page.evaluate("() => new Promise(r => setTimeout(r, 2000))");
+            } catch (Exception ignored) {}
+        }
         context.close();
         browser.close();
         playwright.close();

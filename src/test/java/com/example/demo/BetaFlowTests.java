@@ -38,6 +38,7 @@ class BetaFlowTests {
     @Autowired StudioService studios;
     @Autowired JobService jobs;
     @Autowired StateMovementService movements;
+    @Autowired PaymentService payments;
     @Autowired MockMvc mvc;
     User alice,bob,charlie;
     @BeforeEach void setup(){
@@ -378,5 +379,46 @@ class BetaFlowTests {
         var session=login(alice);
         mvc.perform(get("/movements").session(session)).andExpect(status().isOk());
         mvc.perform(get("/movements").param("type","GROUP_JOIN_REQUEST").session(session)).andExpect(status().isOk());
+    }
+    @Test void paymentsForStudiosAndJobContractsTrackStatusReceiptsAndMovements()throws Exception{
+        // 1. Studio booking paid immediately via MERCADO_PAGO, then refunded on cancel
+        var studio=studios.create(alice.getId(),"Estudio Pago",StudioType.RECORDING,"Sala","CABA","Consola",15000);
+        var booking=studios.book(bob.getId(),studio.getId(),LocalDate.now().plusDays(5).atTime(15,0).toString(),2,PaymentMethod.MERCADO_PAGO,true);
+        var studioPayment=payments.findByReference(PaymentConceptType.STUDIO_BOOKING,booking.getId()).orElseThrow();
+        assertEquals(PaymentStatus.PAID,studioPayment.getStatus());
+        assertEquals(30000,studioPayment.getAmount());
+        assertNotNull(studioPayment.getReceiptCode());
+        assertTrue(studioPayment.getReceiptCode().startsWith("HRM-MP-"));
+
+        studios.cancel(bob.getId(),booking.getId());
+        assertEquals(PaymentStatus.REFUNDED,payments.findByReference(PaymentConceptType.STUDIO_BOOKING,booking.getId()).orElseThrow().getStatus());
+        var studioPayHistory=movements.historyForEntity(MovementEntityType.PAYMENT,studioPayment.getId());
+        assertEquals(3,studioPayHistory.size());
+        assertEquals("PENDING_PAYMENT",studioPayHistory.get(0).getNewStatus());
+        assertEquals("PAID",studioPayHistory.get(1).getNewStatus());
+        assertEquals("REFUNDED",studioPayHistory.get(2).getNewStatus());
+
+        // 2. Job contract: accepting applicant generates PENDING_PAYMENT order -> author pays via BANK_TRANSFER
+        var job=jobs.create(alice.getId(),"Sesión de cuerdas",JobType.SESSION,"Grabación","Violín","CABA",false,"$ 35.000 por sesión");
+        var app=jobs.apply(charlie.getId(),job.getId(),"Disponible");
+        jobs.decide(alice.getId(),app.getId(),true);
+
+        var jobPayment=payments.findByReference(PaymentConceptType.JOB_CONTRACT,app.getId()).orElseThrow();
+        assertEquals(PaymentStatus.PENDING_PAYMENT,jobPayment.getStatus());
+        assertEquals(35000,jobPayment.getAmount());
+
+        var aliceSession=login(alice);
+        mvc.perform(post("/payments/"+jobPayment.getId()+"/pay").session(aliceSession).with(csrf())
+                .param("paymentMethod","BANK_TRANSFER")
+                .param("amount","35000"))
+            .andExpect(status().is3xxRedirection());
+
+        em.flush();em.clear();
+        var paidJobPayment=payments.findByReference(PaymentConceptType.JOB_CONTRACT,app.getId()).orElseThrow();
+        assertEquals(PaymentStatus.PAID,paidJobPayment.getStatus());
+        assertEquals(PaymentMethod.BANK_TRANSFER,paidJobPayment.getPaymentMethod());
+        assertTrue(paidJobPayment.getReceiptCode().startsWith("HRM-TR-"));
+
+        mvc.perform(get("/payments").session(aliceSession)).andExpect(status().isOk());
     }
 }
