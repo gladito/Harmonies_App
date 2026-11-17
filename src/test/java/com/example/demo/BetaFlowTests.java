@@ -376,9 +376,19 @@ class BetaFlowTests {
         assertEquals("OPEN",jobHistory.get(0).getNewStatus());
         assertEquals("CLOSED",jobHistory.get(1).getNewStatus());
 
+        // 5. Regular users cannot access /movements; only ADMIN (or gladito) can access it and see SYSTEM_ERROR logs
+        var bobSession=login(bob);
+        mvc.perform(get("/movements").session(bobSession)).andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/home"));
+
+        var adminRole=new Role("ADMIN");
+        em.persist(adminRole);
+        alice.addRole(adminRole);
+        em.flush();
+
         var session=login(alice);
         mvc.perform(get("/movements").session(session)).andExpect(status().isOk());
         mvc.perform(get("/movements").param("type","GROUP_JOIN_REQUEST").session(session)).andExpect(status().isOk());
+        mvc.perform(get("/movements").param("type","SYSTEM_ERROR").session(session)).andExpect(status().isOk());
     }
     @Test void paymentsForStudiosAndJobContractsTrackStatusReceiptsAndMovements()throws Exception{
         // 1. Studio booking paid immediately via MERCADO_PAGO, then refunded on cancel
@@ -420,5 +430,18 @@ class BetaFlowTests {
         assertTrue(paidJobPayment.getReceiptCode().startsWith("HRM-TR-"));
 
         mvc.perform(get("/payments").session(aliceSession)).andExpect(status().isOk());
+
+        // 3. Job contract accepted -> author cancels before paying -> application becomes REJECTED and payment becomes CANCELLED
+        var job2=jobs.create(alice.getId(),"Tecladista para vivo",JobType.LIVE_GIG,"Show","Teclado","CABA",false,"$ 28.000");
+        var app2=jobs.apply(bob.getId(),job2.getId(),"Me postulo");
+        jobs.decide(alice.getId(),app2.getId(),true);
+        var pendingJobPay=payments.findByReference(PaymentConceptType.JOB_CONTRACT,app2.getId()).orElseThrow();
+        assertEquals(PaymentStatus.PENDING_PAYMENT,pendingJobPay.getStatus());
+
+        mvc.perform(post("/jobs/"+job2.getId()+"/applications/"+app2.getId()+"/cancel").session(aliceSession).with(csrf()))
+            .andExpect(status().is3xxRedirection());
+        em.flush();em.clear();
+        assertEquals(ApplicationStatus.REJECTED,em.find(JobApplication.class,app2.getId()).getStatus());
+        assertEquals(PaymentStatus.CANCELLED,payments.findByReference(PaymentConceptType.JOB_CONTRACT,app2.getId()).orElseThrow().getStatus());
     }
 }

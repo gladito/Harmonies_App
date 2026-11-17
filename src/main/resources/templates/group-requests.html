@@ -59,7 +59,7 @@
         <span class="eyebrow" th:text="#{movements.eyebrow}">Trazabilidad y auditoría</span>
         <h1 th:text="#{requests.titleFor(${username})}">Solicitudes</h1>
         <div class="actions">
-            <a class="btn" th:href="@{/movements(type='GROUP_JOIN_REQUEST')}" th:text="#{requests.viewAllMovements}">Ver tabla completa de movimientos →</a>
+            <a class="btn" th:if="${session.isAdmin}" th:href="@{/movements(type='GROUP_JOIN_REQUEST')}" th:text="#{requests.viewAllMovements}">Ver tabla completa de movimientos →</a>
             <a th:href="@{/groups}" th:text="#{nav.bands}">Mis bandas</a>
         </div>
     </section>
@@ -109,9 +109,9 @@
         <p class="muted" style="margin:0" th:text="#{requests.sentEmpty}">No tenés solicitudes pendientes enviadas a otras bandas.</p>
     </div>
 
-    <h2 th:text="#{requests.movementsHeading}">Últimos movimientos de solicitudes (Trazabilidad)</h2>
-    <div class="card" th:if="${#lists.isEmpty(requestMovements)}" th:text="#{movements.empty}"></div>
-    <div class="card" th:if="${!#lists.isEmpty(requestMovements)}" style="overflow-x:auto;">
+    <h2 th:if="${session.isAdmin}" th:text="#{requests.movementsHeading}">Últimos movimientos de solicitudes (Trazabilidad)</h2>
+    <div class="card" th:if="${session.isAdmin and #lists.isEmpty(requestMovements)}" th:text="#{movements.empty}"></div>
+    <div class="card" th:if="${session.isAdmin and !#lists.isEmpty(requestMovements)}" style="overflow-x:auto;">
         <table class="movements-mini">
             <thead>
             <tr>

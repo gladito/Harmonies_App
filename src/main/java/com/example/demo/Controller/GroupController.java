@@ -93,6 +93,7 @@ public class GroupController {
             model.addAttribute("groupId", groupId);
             return "group-edit";
         } catch (RuntimeException ex) {
+            movementService.recordSystemError(userId, "GET /groups/" + groupId + "/edit", ex.getClass().getSimpleName(), ex.getMessage());
             redirectAttributes.addFlashAttribute("createError", ex.getMessage());
             return "redirect:/groups";
         }
@@ -118,6 +119,7 @@ public class GroupController {
             redirectAttributes.addFlashAttribute("createSuccess", "¡Tu banda se creó correctamente!");
             return "redirect:/groups";
         } catch (RuntimeException ex) {
+            movementService.recordSystemError(userId, "POST /groups", ex.getClass().getSimpleName(), ex.getMessage());
             redirectAttributes.addFlashAttribute("createError", ex.getMessage());
             redirectAttributes.addFlashAttribute("groupForm", groupForm);
             return "redirect:/groups/new";
@@ -155,6 +157,7 @@ public class GroupController {
             groupJoinRequestService.submitRequest(userId, joinRequest);
             redirectAttributes.addFlashAttribute("createSuccess", "Solicitud enviada al dueño de la banda.");
         } catch (RuntimeException ex) {
+            movementService.recordSystemError(userId, "POST /groups/" + groupId + "/request", ex.getClass().getSimpleName(), ex.getMessage());
             redirectAttributes.addFlashAttribute("createError", ex.getMessage());
         }
         return "redirect:/groups/explore";
@@ -172,6 +175,7 @@ public class GroupController {
             groupService.leaveGroup(groupId, userId);
             redirectAttributes.addFlashAttribute("createSuccess", "Saliste de la banda.");
         } catch (RuntimeException ex) {
+            movementService.recordSystemError(userId, "POST /groups/" + groupId + "/leave", ex.getClass().getSimpleName(), ex.getMessage());
             redirectAttributes.addFlashAttribute("createError", ex.getMessage());
         }
         return "redirect:/groups";
@@ -189,6 +193,7 @@ public class GroupController {
             groupService.deleteGroup(groupId, userId);
             redirectAttributes.addFlashAttribute("createSuccess", "Eliminaste la banda.");
         } catch (RuntimeException ex) {
+            movementService.recordSystemError(userId, "POST /groups/" + groupId + "/delete", ex.getClass().getSimpleName(), ex.getMessage());
             redirectAttributes.addFlashAttribute("createError", ex.getMessage());
         }
         return "redirect:/groups";
@@ -216,6 +221,7 @@ public class GroupController {
             groupService.updateGroup(groupId, userId, groupForm);
             redirectAttributes.addFlashAttribute("createSuccess", "Banda actualizada.");
         } catch (RuntimeException ex) {
+            movementService.recordSystemError(userId, "POST /groups/" + groupId + "/edit", ex.getClass().getSimpleName(), ex.getMessage());
             redirectAttributes.addFlashAttribute("createError", ex.getMessage());
             redirectAttributes.addFlashAttribute("groupForm", groupForm);
             return "redirect:/groups/" + groupId + "/edit";
@@ -235,6 +241,7 @@ public class GroupController {
             groupJoinRequestService.approveRequest(requestId, userId);
             redirectAttributes.addFlashAttribute("requestSuccess", "Solicitud aprobada.");
         } catch (RuntimeException ex) {
+            movementService.recordSystemError(userId, "POST /groups/requests/" + requestId + "/approve", ex.getClass().getSimpleName(), ex.getMessage());
             redirectAttributes.addFlashAttribute("requestError", ex.getMessage());
         }
         return "redirect:/groups/requests";
@@ -252,6 +259,7 @@ public class GroupController {
             groupJoinRequestService.rejectRequest(requestId, userId);
             redirectAttributes.addFlashAttribute("requestSuccess", "Solicitud rechazada.");
         } catch (RuntimeException ex) {
+            movementService.recordSystemError(userId, "POST /groups/requests/" + requestId + "/reject", ex.getClass().getSimpleName(), ex.getMessage());
             redirectAttributes.addFlashAttribute("requestError", ex.getMessage());
         }
         return "redirect:/groups/requests";
@@ -269,6 +277,7 @@ public class GroupController {
             groupJoinRequestService.cancelRequest(requestId, userId);
             redirectAttributes.addFlashAttribute("requestSuccess", "Solicitud cancelada.");
         } catch (RuntimeException ex) {
+            movementService.recordSystemError(userId, "POST /groups/requests/" + requestId + "/cancel", ex.getClass().getSimpleName(), ex.getMessage());
             redirectAttributes.addFlashAttribute("requestError", ex.getMessage());
         }
         return "redirect:/groups/requests";

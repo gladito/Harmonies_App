@@ -7,6 +7,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -45,6 +46,29 @@ public class StateMovementService {
         );
         em.persist(movement);
         return movement;
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void recordSystemError(Long userId, String endpointLabel, String errorCode, String errorMessage) {
+        User actor = userId != null ? em.find(User.class, userId) : null;
+        if (actor == null) {
+            var list = em.createQuery("select u from User u where u.deleted=false order by u.id asc", User.class)
+                    .setMaxResults(1).getResultList();
+            if (list.isEmpty()) {
+                return;
+            }
+            actor = list.get(0);
+        }
+        Long entityId = userId != null ? userId : actor.getId();
+        record(
+                MovementEntityType.SYSTEM_ERROR,
+                entityId,
+                endpointLabel != null ? endpointLabel : "ERROR",
+                errorCode != null ? errorCode : "OPERACION",
+                "ERROR",
+                actor,
+                errorMessage
+        );
     }
 
     @Transactional(readOnly = true)

@@ -1,6 +1,7 @@
 package com.example.demo.Controller;
 
 import com.example.demo.Models.MovementEntityType;
+import com.example.demo.Services.CommunityService;
 import com.example.demo.Services.StateMovementService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
@@ -12,9 +13,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 public class MovementController {
 
     private final StateMovementService movementService;
+    private final CommunityService community;
 
-    public MovementController(StateMovementService movementService) {
+    public MovementController(StateMovementService movementService, CommunityService community) {
         this.movementService = movementService;
+        this.community = community;
     }
 
     @GetMapping("/movements")
@@ -25,6 +28,9 @@ public class MovementController {
         Long userId = (Long) session.getAttribute("userId");
         if (userId == null) {
             return "redirect:/login";
+        }
+        if (!community.isAdmin(userId)) {
+            throw new IllegalArgumentException("Acceso restringido: solo un administrador puede consultar el registro de trazabilidad y errores.");
         }
         model.addAttribute("movements", movementService.list(userId, type, mine));
         model.addAttribute("selectedType", type);
