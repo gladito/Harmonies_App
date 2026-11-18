@@ -2,170 +2,50 @@
 <html lang="es" th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title th:text="#{post.createTitle}">Harmony | Nueva publicación</title>
-    <style>
-        body {
-            margin: 0;
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background: radial-gradient(circle at top, #22d3ee 0%, #0f172a 60%, #020617 100%);
-            color: #e2e8f0;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 40px 16px;
-        }
-
-        .card {
-            width: 100%;
-            max-width: 560px;
-            background: rgba(15, 23, 42, 0.9);
-            border-radius: 24px;
-            padding: 36px;
-            border: 1px solid rgba(148, 163, 184, 0.18);
-            box-shadow: 0 30px 60px rgba(15, 23, 42, 0.6);
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .card h1 {
-            margin: 0;
-            font-size: 30px;
-        }
-
-        .card p {
-            margin: 0;
-            color: rgba(226, 232, 240, 0.8);
-        }
-
-        .alert {
-            padding: 12px 16px;
-            border-radius: 12px;
-            font-size: 14px;
-        }
-
-        .alert.error {
-            background: rgba(248, 113, 113, 0.18);
-            border: 1px solid rgba(248, 113, 113, 0.3);
-            color: #fecaca;
-        }
-
-        form {
-            display: flex;
-            flex-direction: column;
-            gap: 18px;
-        }
-
-        label {
-            font-weight: 600;
-            color: rgba(226, 232, 240, 0.85);
-        }
-
-        input[type="text"],
-        input[type="number"],
-        select,
-        textarea {
-            width: 100%;
-            padding: 12px 14px;
-            border-radius: 12px;
-            border: 1px solid rgba(148, 163, 184, 0.25);
-            background: rgba(15, 23, 42, 0.65);
-            color: #e2e8f0;
-            font-size: 15px;
-            transition: border-color 0.2s, box-shadow 0.2s;
-            resize: vertical;
-        }
-
-        textarea {
-            min-height: 120px;
-        }
-
-        input:focus,
-        textarea:focus,
-        select:focus {
-            outline: none;
-            border-color: rgba(99, 102, 241, 0.6);
-            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.25);
-        }
-
-        .actions {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .actions a {
-            text-decoration: none;
-            color: #93c5fd;
-            font-weight: 600;
-        }
-
-        button[type="submit"] {
-            border: none;
-            border-radius: 12px;
-            background: linear-gradient(135deg, #6366f1, #22d3ee);
-            color: #020617;
-            font-weight: 700;
-            font-size: 16px;
-            padding: 12px 20px;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        button[type="submit"]:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 18px 36px rgba(99, 102, 241, 0.35);
-        }
-    </style>
-<style>:root{color-scheme:dark}body{background:#080808!important;color:#f8f8ff!important}h1,h2,h3{color:#d4af37!important}a{color:#d4af37!important}.card,.container,.post-card,.comments-card{border-color:#8b7324!important}button{background:#d4af37!important;color:#080808!important}</style></head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="#{post.createTitle}">Harmony · Nueva publicación</title>
+    <link rel="stylesheet" th:href="@{/css/harmony.css}">
+</head>
 <body>
-<div class="card">
-    <h1 th:text="#{post.createHeading}">Nueva publicación</h1>
-    <p th:text="#{post.createSubtitle}">Comparte tu último audio con la comunidad y recibe feedback de tus bandas.</p>
+<nav th:replace="~{fragments :: nav}"></nav>
+<main style="max-width:680px;">
+    <div class="notice" role="alert" th:if="${createError}" th:text="${createError}"></div>
 
-    <div th:if="${createError}" class="alert error" th:text="${createError}">
-        Ocurrió un error al publicar.
-    </div>
+    <section class="card hero">
+        <span class="eyebrow" th:text="#{home.eyebrow}">La música empieza con una conexión</span>
+        <h1 th:text="#{post.createHeading}">Nueva publicación</h1>
+        <p class="muted" th:text="#{post.createSubtitle}">Comparte tu último audio con la comunidad y recibe feedback de tus bandas.</p>
+    </section>
 
-    <form th:action="@{/posts}" th:object="${postForm}" method="post">
-        <div>
-            <label for="tags" th:text="#{tags.help}">Etiquetas (hasta cinco, separadas por coma)</label><input id="tags" th:field="*{tags}" maxlength="254" placeholder="jazz, bajo, colaboración">
-        <label for="title" th:text="#{band.title}">Título</label>
-            <input id="title" type="text" th:field="*{title}" placeholder="Ej. Synthwave Jam #3" required>
-        </div>
+    <section class="card">
+        <form th:action="@{/posts}" th:object="${postForm}" method="post">
+            <label for="title" th:text="#{band.title}">Título</label>
+            <input id="title" type="text" th:field="*{title}" maxlength="120" placeholder="Ej. Synthwave Jam #3" required>
 
-        <div>
+            <label for="tags" th:text="#{tags.help}">Etiquetas (hasta cinco, separadas por coma)</label>
+            <input id="tags" th:field="*{tags}" maxlength="254" placeholder="jazz, bajo, colaboración">
+
             <label for="description" th:text="#{band.description}">Descripción</label>
-            <textarea id="description" th:field="*{description}" maxlength="500" placeholder="Describe qué grabaste, qué buscas mejorar o qué feedback necesitas."></textarea>
-        </div>
+            <textarea id="description" th:field="*{description}" maxlength="500"></textarea>
 
-        <div>
             <label for="audioUrl" th:text="#{post.audioUrl}">URL del audio</label>
             <input id="audioUrl" type="text" th:field="*{audioUrl}" placeholder="https://..." required>
-        </div>
 
-        <div>
             <label for="durationInSeconds" th:text="#{post.durationSeconds}">Duración (segundos)</label>
             <input id="durationInSeconds" type="number" th:field="*{durationInSeconds}" min="0" placeholder="180">
-        </div>
 
-        <div>
             <label for="visibility" th:text="#{post.visibility}">Visibilidad</label>
             <select id="visibility" th:field="*{visibility}">
                 <option th:value="${T(com.example.demo.Models.Visibility).PUBLIC}" th:text="#{visibility.public}">Público</option>
                 <option th:value="${T(com.example.demo.Models.Visibility).PRIVATE}" th:text="#{visibility.private}">Privado</option>
             </select>
-        </div>
 
-        <div class="actions">
-            <a th:href="@{/home}" th:text="#{common.backToHome}">Volver al inicio</a>
-            <button type="submit" th:text="#{post.publishButton}">Publicar</button>
-        </div>
-    </form>
-</div>
+            <div class="actions" style="justify-content:space-between;margin-top:10px;">
+                <a class="btn" th:href="@{/home}" th:text="#{common.backToHome}">Volver al inicio</a>
+                <button type="submit" class="active" th:text="#{post.publishButton}">Publicar</button>
+            </div>
+        </form>
+    </section>
+</main>
 </body>
 </html>
-
-

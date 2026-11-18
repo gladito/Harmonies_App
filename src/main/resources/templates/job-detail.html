@@ -51,10 +51,10 @@
 
                     <div class="actions" th:if="${a.status.name() == 'PENDING'}">
                         <form th:action="@{|/jobs/${job.id}/applications/${a.id}|}" method="post">
-                            <input type="hidden" name="accept" value="true"><button th:text="#{application.accept}">Aceptar</button>
+                            <input type="hidden" name="accept" value="true"><button class="active" th:text="#{application.accept}">Aceptar</button>
                         </form>
                         <form th:action="@{|/jobs/${job.id}/applications/${a.id}|}" method="post">
-                            <input type="hidden" name="accept" value="false"><button th:text="#{application.reject}">Rechazar</button>
+                            <input type="hidden" name="accept" value="false"><button class="btn-danger" th:text="#{application.reject}">Rechazar</button>
                         </form>
                     </div>
 
@@ -71,7 +71,32 @@
                                         th:selected="${appPayments[a.id].paymentMethod == m}"
                                         th:text="#{${'payment.method.' + m}}"></option>
                             </select>
-                            <button type="submit" class="active" th:text="#{payments.payButton}">Confirmar y abonar</button>
+
+                            <div class="pay-transfer-fields" th:style="${appPayments[a.id].paymentMethod.name() == 'CARD'} ? 'display:none' : 'display:block'">
+                                <div class="member-section" style="margin-bottom:10px;font-size:13px;">
+                                    <div><strong style="color:var(--gold);" th:text="#{payments.destAlias}">Alias de destino:</strong>
+                                        <code th:text="|${a.applicant.username}.harmony.mp|"></code></div>
+                                    <div><strong style="color:var(--gold);" th:text="#{payments.destCbu}">CBU / CVU:</strong>
+                                        <code th:text="|0000003100084920155${a.applicant.id}|"></code></div>
+                                </div>
+                                <label th:text="#{payments.operationRefLabel}">N° de operación / comprobante de la transferencia</label>
+                                <input type="text" name="operationReference" maxlength="50"
+                                       th:required="${appPayments[a.id].paymentMethod.name() != 'CARD'}"
+                                       th:placeholder="#{payments.operationRefPlaceholder}">
+                            </div>
+
+                            <div class="pay-card-fields" th:style="${appPayments[a.id].paymentMethod.name() == 'CARD'} ? 'display:block' : 'display:none'">
+                                <label th:text="#{payments.cardHolderLabel}">Nombre y apellido del titular de la tarjeta</label>
+                                <input type="text" name="cardHolder" maxlength="60"
+                                       th:required="${appPayments[a.id].paymentMethod.name() == 'CARD'}"
+                                       th:placeholder="#{payments.cardHolderPlaceholder}">
+                                <label th:text="#{payments.cardNumberLabel}">Número de tarjeta (16 dígitos o últimos 4)</label>
+                                <input type="text" name="cardNumber" maxlength="24"
+                                       th:required="${appPayments[a.id].paymentMethod.name() == 'CARD'}"
+                                       th:placeholder="#{payments.cardNumberPlaceholder}">
+                            </div>
+
+                            <button type="submit" class="active" th:text="#{payments.registerPaymentBtn}">Registrar pago y guardar comprobante</button>
                         </form>
                     </div>
 
@@ -90,7 +115,7 @@
                 <form th:action="@{|/jobs/${job.id}/apply|}" method="post">
                     <label for="message" th:text="#{application.message}">Mensaje para quien publicó</label>
                     <textarea id="message" name="message" maxlength="500" th:placeholder="#{application.placeholder}"></textarea>
-                    <button th:text="#{application.submit}">Enviar postulación</button>
+                    <button class="active" th:text="#{application.submit}">Enviar postulación</button>
                 </form>
             </div>
 

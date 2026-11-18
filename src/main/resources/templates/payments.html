@@ -39,26 +39,55 @@
     <div class="card" th:if="${#lists.isEmpty(pendingToPay)}" th:text="#{payments.pendingEmpty}">
         No tenés pagos pendientes por abonar.
     </div>
-    <div class="grid-cards" th:if="${!#lists.isEmpty(pendingToPay)}" style="margin-bottom:32px;">
-        <article class="card" th:each="p : ${pendingToPay}">
+    <div class="band-grid" th:if="${!#lists.isEmpty(pendingToPay)}" style="margin-bottom:32px;">
+        <article class="band-card" th:each="p : ${pendingToPay}">
             <div class="actions" style="justify-content:space-between;">
                 <span class="pill" th:text="#{${'payment.concept.' + p.conceptType}}">Concepto</span>
-                <span class="status status-pending" th:text="#{${'payment.status.' + p.status}}">Pendiente</span>
+                <span class="status status-pending" th:text="#{${'payment.status.' + p.status}}">Pendiente de pago</span>
             </div>
-            <h3 style="margin:10px 0 4px;" th:text="${p.description}">Descripción</h3>
-            <p class="small muted">
-                <a th:href="@{|/people/${p.recipient.id}|}" th:text="${p.recipient.username}"></a>
+            <h3 style="margin:6px 0 2px;" th:text="${p.description}">Descripción</h3>
+            <p class="small muted" style="margin:0;">
+                Destinatario: <a th:href="@{|/people/${p.recipient.id}|}" th:text="|@${p.recipient.username}|"></a>
             </p>
-            <form th:action="@{|/payments/${p.id}/pay|}" method="post" style="margin-top:10px;">
+
+            <form th:action="@{|/payments/${p.id}/pay|}" method="post" style="margin-top:8px;">
                 <label th:text="#{payments.amountLabel}">Monto a abonar ($)</label>
                 <input type="number" name="amount" min="100" max="10000000" required th:value="${p.amount}">
+
                 <label th:text="#{payments.methodLabel}">Método de pago</label>
                 <select name="paymentMethod">
                     <option th:each="m : ${methods}" th:value="${m}"
                             th:selected="${p.paymentMethod == m}"
                             th:text="#{${'payment.method.' + m}}"></option>
                 </select>
-                <button type="submit" class="active" th:text="#{payments.payButton}">Confirmar y abonar</button>
+
+                <!-- Campos para Transferencia Bancaria o Mercado Pago -->
+                <div class="pay-transfer-fields" th:style="${p.paymentMethod.name() == 'CARD'} ? 'display:none' : 'display:block'">
+                    <div class="member-section" style="margin-bottom:12px;font-size:13px;">
+                        <div><strong style="color:var(--gold);" th:text="#{payments.destAlias}">Alias de destino:</strong>
+                            <code th:text="|${p.recipient.username}.harmony.mp|"></code></div>
+                        <div><strong style="color:var(--gold);" th:text="#{payments.destCbu}">CBU / CVU:</strong>
+                            <code th:text="|0000003100084920155${p.recipient.id}|"></code></div>
+                    </div>
+                    <label th:text="#{payments.operationRefLabel}">N° de operación / comprobante de la transferencia</label>
+                    <input type="text" name="operationReference" maxlength="50"
+                           th:required="${p.paymentMethod.name() != 'CARD'}"
+                           th:placeholder="#{payments.operationRefPlaceholder}">
+                </div>
+
+                <!-- Campos para Tarjeta de Crédito o Débito -->
+                <div class="pay-card-fields" th:style="${p.paymentMethod.name() == 'CARD'} ? 'display:block' : 'display:none'">
+                    <label th:text="#{payments.cardHolderLabel}">Nombre y apellido del titular de la tarjeta</label>
+                    <input type="text" name="cardHolder" maxlength="60"
+                           th:required="${p.paymentMethod.name() == 'CARD'}"
+                           th:placeholder="#{payments.cardHolderPlaceholder}">
+                    <label th:text="#{payments.cardNumberLabel}">Número de tarjeta (16 dígitos o últimos 4)</label>
+                    <input type="text" name="cardNumber" maxlength="24"
+                           th:required="${p.paymentMethod.name() == 'CARD'}"
+                           th:placeholder="#{payments.cardNumberPlaceholder}">
+                </div>
+
+                <button type="submit" class="active" style="width:100%;" th:text="#{payments.registerPaymentBtn}">Registrar pago y guardar comprobante</button>
             </form>
         </article>
     </div>

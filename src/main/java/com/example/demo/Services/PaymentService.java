@@ -32,7 +32,7 @@ public class PaymentService {
                                boolean payImmediately,
                                User payer,
                                User recipient) {
-        PaymentMethod effectiveMethod = method != null ? method : PaymentMethod.MERCADO_PAGO;
+        PaymentMethod effectiveMethod = method != null ? method : PaymentMethod.BANK_TRANSFER;
         int safeAmount = (amount != null && amount > 0) ? amount : 20000;
         String safeDesc = description != null && description.length() > 180
                 ? description.substring(0, 180)
@@ -49,23 +49,26 @@ public class PaymentService {
                 null,
                 PaymentStatus.PENDING_PAYMENT.name(),
                 payer,
-                "Orden de pago generada: " + safeDesc
+                "Orden de pago generada (Pendiente de transferencia/pago): " + safeDesc
         );
 
-        if (payImmediately) {
-            completePayment(payer.getId(), payment.getId(), effectiveMethod, safeAmount);
-        }
         return payment;
     }
 
-    public Payment completePayment(Long actorId, Long paymentId, PaymentMethod method, Integer customAmount) {
+    public Payment completePayment(Long actorId,
+                                   Long paymentId,
+                                   PaymentMethod method,
+                                   Integer customAmount,
+                                   String operationReference,
+                                   String cardHolder,
+                                   String cardNumber) {
         User actor = community.user(actorId);
         Payment payment = paymentId == null ? null : em.find(Payment.class, paymentId, LockModeType.PESSIMISTIC_WRITE);
         if (payment == null || payment.isDeleted()) {
             throw new IllegalArgumentException("Orden de pago no disponible.");
         }
         if (!payment.getPayer().getId().equals(actorId)) {
-            throw new IllegalArgumentException("Solo el usuario responsable del pago puede abonarlo.");
+            throw new IllegalArgumentException("Solo el usuario responsable del pago puede registrar el pago.");
         }
         if (payment.getStatus() != PaymentStatus.PENDING_PAYMENT) {
             throw new IllegalArgumentException("Esta orden de pago ya fue procesada.");
@@ -75,8 +78,9 @@ public class PaymentService {
         }
 
         PaymentMethod chosenMethod = method != null ? method : payment.getPaymentMethod();
+        String receipt = buildValidatedReceipt(chosenMethod, operationReference, cardHolder, cardNumber);
+
         String prevStatus = payment.getStatus().name();
-        String receipt = generateReceiptCode(chosenMethod, payment.getId());
         payment.markAsPaid(chosenMethod, receipt);
 
         movementService.record(
@@ -86,9 +90,37 @@ public class PaymentService {
                 prevStatus,
                 payment.getStatus().name(),
                 actor,
-                "Pago acreditado vía " + methodDisplayName(chosenMethod) + " · Comprobante " + receipt
+                "Pago registrado vía " + methodDisplayName(chosenMethod) + " · N° Operación/Comprobante: " + receipt
         );
         return payment;
+    }
+
+    private String buildValidatedReceipt(PaymentMethod method,
+                                         String operationReference,
+                                         String cardHolder,
+                                         String cardNumber) {
+        if (method == PaymentMethod.CARD) {
+            String holder = cardHolder == null ? "" : cardHolder.trim();
+            String digits = cardNumber == null ? "" : cardNumber.replaceAll("[^0-9]", "");
+            if (holder.length() < 3) {
+                throw new IllegalArgumentException("Ingresá el nombre del titular de la tarjeta.");
+            }
+            if (digits.length() < 4) {
+                throw new IllegalArgumentException("Ingresá al menos los últimos 4 dígitos de la tarjeta.");
+            }
+            String last4 = digits.substring(digits.length() - 4);
+            String cleanHolder = holder.length() > 24 ? holder.substring(0, 24) : holder;
+            return "TARJETA-****" + last4 + " (" + cleanHolder + ")";
+        } else {
+            String ref = operationReference == null ? "" : operationReference.trim();
+            if (ref.length() < 4 || ref.length() > 50) {
+                throw new IllegalArgumentException("Ingresá el número de operación o comprobante de la transferencia (mínimo 4 caracteres).");
+            }
+            String prefix = (method == PaymentMethod.MERCADO_PAGO) ? "MP-" : "TRANSF-";
+            return ref.toUpperCase(Locale.ROOT).startsWith("MP-") || ref.toUpperCase(Locale.ROOT).startsWith("TRANSF-")
+                    ? ref
+                    : prefix + ref;
+        }
     }
 
     public void refundOrCancelForReference(PaymentConceptType conceptType, Long referenceId, User actor, String reason) {
@@ -182,18 +214,8 @@ public class PaymentService {
         }
     }
 
-    private String generateReceiptCode(PaymentMethod method, Long id) {
-        String prefix = switch (method) {
-            case MERCADO_PAGO -> "HRM-MP-";
-            case BANK_TRANSFER -> "HRM-TR-";
-            case CARD -> "HRM-TC-";
-        };
-        String suffix = UUID.randomUUID().toString().replaceAll("[^0-9A-F]", "").substring(0, 6).toUpperCase(Locale.ROOT);
-        return prefix + String.format("%04d-", id != null ? id : 1) + suffix;
-    }
-
     public static String methodDisplayName(PaymentMethod method) {
-        if (method == null) return "Mercado Pago";
+        if (method == null) return "Transferencia Bancaria";
         return switch (method) {
             case MERCADO_PAGO -> "Mercado Pago";
             case BANK_TRANSFER -> "Transferencia Bancaria (CBU/Alias)";

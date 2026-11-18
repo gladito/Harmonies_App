@@ -64,6 +64,9 @@ public class PaymentController {
     public String pay(@PathVariable Long id,
                       @RequestParam(required = false) String paymentMethod,
                       @RequestParam(required = false) Integer amount,
+                      @RequestParam(required = false) String operationReference,
+                      @RequestParam(required = false) String cardHolder,
+                      @RequestParam(required = false) String cardNumber,
                       @RequestParam(defaultValue = "/payments") String back,
                       HttpSession s,
                       RedirectAttributes ra) {
@@ -73,8 +76,8 @@ public class PaymentController {
         }
         try {
             PaymentMethod method = StudioController.parse(PaymentMethod.class, paymentMethod);
-            Payment p = payments.completePayment(userId, id, method, amount);
-            ra.addFlashAttribute("message", "¡Pago acreditado! Comprobante: " + p.getReceiptCode());
+            Payment p = payments.completePayment(userId, id, method, amount, operationReference, cardHolder, cardNumber);
+            ra.addFlashAttribute("message", "¡Pago registrado correctamente! N° de comprobante/operación: " + p.getReceiptCode());
         } catch (RuntimeException ex) {
             ra.addFlashAttribute("message", ex.getMessage());
         }

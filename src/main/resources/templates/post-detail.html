@@ -2,234 +2,119 @@
 <html lang="es" th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title th:text="'Harmony | ' + ${post.title}">Harmony | Post</title>
-    <style>
-        body {
-            margin: 0;
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background: radial-gradient(circle at top right, #6366f1 0%, #0f172a 55%, #020617 100%);
-            color: #e2e8f0;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            padding: 40px 16px;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 960px;
-            display: grid;
-            gap: 24px;
-            grid-template-columns: 2fr 1fr;
-        }
-
-        .post-card,
-        .comments-card {
-            background: rgba(15, 23, 42, 0.88);
-            border-radius: 24px;
-            padding: 32px;
-            border: 1px solid rgba(148, 163, 184, 0.15);
-            box-shadow: 0 25px 60px rgba(15, 23, 42, 0.55);
-        }
-
-        h1 {
-            margin-top: 0;
-            font-size: 32px;
-        }
-
-        .meta {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            color: rgba(148, 163, 184, 0.85);
-            margin-top: 12px;
-        }
-
-        .audio-preview {
-            margin: 24px 0;
-            padding: 20px;
-            background: rgba(30, 41, 59, 0.8);
-            border-radius: 18px;
-            border: 1px solid rgba(148, 163, 184, 0.2);
-        }
-
-        .description {
-            line-height: 1.6;
-            color: rgba(226, 232, 240, 0.85);
-        }
-
-        .comment-item {
-            background: rgba(30, 41, 59, 0.75);
-            border-radius: 16px;
-            padding: 16px;
-            margin-bottom: 16px;
-            border: 1px solid rgba(148, 163, 184, 0.12);
-        }
-
-        .comment-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 14px;
-            color: rgba(148, 163, 184, 0.9);
-        }
-
-        .comment-content {
-            margin-top: 8px;
-            color: rgba(226, 232, 240, 0.85);
-        }
-
-        form {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        textarea {
-            width: 100%;
-            min-height: 120px;
-            padding: 12px 14px;
-            border-radius: 12px;
-            border: 1px solid rgba(148, 163, 184, 0.25);
-            background: rgba(15, 23, 42, 0.65);
-            color: #e2e8f0;
-            font-size: 15px;
-            resize: vertical;
-        }
-
-        textarea:focus {
-            outline: none;
-            border-color: rgba(99, 102, 241, 0.6);
-            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.25);
-        }
-
-        button[type="submit"] {
-            border: none;
-            border-radius: 12px;
-            background: linear-gradient(135deg, #22d3ee, #6366f1);
-            color: #020617;
-            font-weight: 700;
-            font-size: 15px;
-            padding: 12px 20px;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        button[type="submit"]:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 18px 36px rgba(99, 102, 241, 0.35);
-        }
-
-        .alert {
-            padding: 12px 16px;
-            border-radius: 12px;
-            margin-bottom: 12px;
-            font-size: 14px;
-        }
-
-        .alert.success {
-            background: rgba(74, 222, 128, 0.18);
-            border: 1px solid rgba(74, 222, 128, 0.35);
-            color: #bbf7d0;
-        }
-
-        .alert.error {
-            background: rgba(248, 113, 113, 0.18);
-            border: 1px solid rgba(248, 113, 113, 0.3);
-            color: #fecaca;
-        }
-
-        .back-link {
-            text-decoration: none;
-            color: #93c5fd;
-            font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            margin-bottom: 24px;
-        }
-
-        @media (max-width: 960px) {
-            .container {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
-<style>:root{color-scheme:dark}body{background:#080808!important;color:#f8f8ff!important}h1,h2,h3{color:#d4af37!important}a{color:#d4af37!important}.card,.container,.post-card,.comments-card{border-color:#8b7324!important}button{background:#d4af37!important;color:#080808!important}</style></head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="|Harmony · ${post.title}|">Harmony · Post</title>
+    <link rel="stylesheet" th:href="@{/css/harmony.css}">
+</head>
 <body>
-<a th:href="@{/home}" class="back-link" th:text="#{common.backToHomeArrow}">← Volver al inicio</a>
-<div style="max-width:960px;width:100%;margin-bottom:16px;">
-    <div th:if="${postSuccess}" class="alert success" th:text="${postSuccess}" style="margin:0 0 12px 0;">Actualización exitosa.</div>
-    <div th:if="${postError}" class="alert error" th:text="${postError}" style="margin:0 0 12px 0;">Error</div>
-</div>
-<div class="container">
-    <article class="post-card">
-        <h1 th:text="${post.title}">Título del post</h1>
-        <div class="meta">
-            <span style="display:inline-flex;align-items:center;gap:10px;">
-                <img th:if="${!#strings.isEmpty(post.authorAvatarUrl)}" th:src="${post.authorAvatarUrl}" th:alt="${post.authorUsername}"
-                     style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:1.5px solid #d4af37;">
-                <span th:if="${#strings.isEmpty(post.authorAvatarUrl)}"
-                      th:text="${#strings.substring(post.authorUsername,0,1).toUpperCase()}"
-                      style="display:inline-grid;place-items:center;width:36px;height:36px;border-radius:50%;border:1.5px solid #d4af37;color:#d4af37;font-weight:700;"></span>
-                <span th:text="#{post.by(${post.authorUsername})}">Por autor</span>
-            </span>
-            <span th:text="${#temporals.format(post.createdAt, 'dd MMM yyyy HH:mm')}">10 Nov 2025 18:00</span>
+<nav th:replace="~{fragments :: nav}"></nav>
+<main>
+    <div class="notice" role="status" th:if="${createSuccess}" th:text="${createSuccess}"></div>
+    <div class="notice" role="status" th:if="${postSuccess}" th:text="${postSuccess}"></div>
+    <div class="notice" role="status" th:if="${postError}" th:text="${postError}"></div>
+    <div class="notice" role="status" th:if="${commentSuccess}" th:text="${commentSuccess}"></div>
+    <div class="notice" role="status" th:if="${commentError}" th:text="${commentError}"></div>
+
+    <p><a th:href="@{/home}" th:text="#{common.backToHomeArrow}">← Volver al inicio</a></p>
+
+    <section class="card hero">
+        <div class="actions" style="justify-content:space-between;margin-bottom:10px;">
+            <div class="actions">
+                <a th:href="@{|/people/${post.authorId}|}" class="row-avatar" style="gap:10px;">
+                    <img class="avatar-img avatar-sm" style="width:44px;height:44px;min-width:44px;"
+                         th:if="${!#strings.isEmpty(post.authorAvatarUrl)}" th:src="${post.authorAvatarUrl}" th:alt="${post.authorUsername}">
+                    <span class="avatar avatar-sm" style="width:44px;height:44px;min-width:44px;font-size:18px;"
+                          th:if="${#strings.isEmpty(post.authorAvatarUrl)}"
+                          th:text="${#strings.substring(post.authorUsername,0,1).toUpperCase()}"></span>
+                    <strong th:text="#{post.by(${post.authorUsername})}">Por autor</strong>
+                </a>
+                <a th:if="${post.bandName != null}" th:href="@{|/bands/${post.bandId}|}" class="pill"
+                   th:text="${post.bandName}">Banda</a>
+            </div>
+            <small class="muted" th:text="${#temporals.format(post.createdAt, 'dd/MM/yyyy HH:mm')}">16/11/2026 18:00</small>
         </div>
-        <div th:if="${isOwner}" style="margin-top:18px; display:flex; gap:12px;">
-            <a th:href="@{|/posts/${post.id}/edit|}" class="back-link" style="margin:0; padding:8px 16px; background:rgba(99,102,241,0.2); border-radius:999px;" th:text="#{post.edit}">Editar publicación</a>
-            <form th:action="@{|/posts/${post.id}/delete|}" method="post" th:attr="data-confirm=#{post.confirmDelete}">
-                <button type="submit" style="border:none;padding:8px 16px;border-radius:999px;background:rgba(248,113,113,0.25);color:#fecaca;font-weight:600;cursor:pointer;" th:text="#{post.delete}">
-                    Eliminar publicación
-                </button>
+
+        <h1 th:text="${post.title}">Título del track</h1>
+        <p class="prewrap" style="font-size:16px;color:#e0ddd5;"
+           th:text="${!#strings.isEmpty(post.description) ? post.description : #messages.msg('post.noDescription')}"></p>
+
+        <div class="actions" th:if="${post.tags != null and !post.tags.isEmpty()}" style="margin:12px 0;">
+            <a class="pill" th:each="label : ${post.tags}" th:href="@{/home(tag=${label})}" th:text="|#${label}|"></a>
+        </div>
+
+        <div class="audio-deck">
+            <div class="audio-deck-head">
+                <strong style="color:var(--gold);letter-spacing:1px;" th:text="#{post.listenDemo}">Escucha la demo:</strong>
+                <span class="pill" th:if="${post.durationInSeconds != null}"
+                      th:text="#{post.duration(${post.durationInSeconds})}"></span>
+            </div>
+            <audio controls preload="none" th:src="${post.audioUrl}" th:text="#{audio.unsupported}"></audio>
+        </div>
+
+        <div class="actions" style="justify-content:space-between;margin-top:16px;">
+            <form th:if="${reaction != null}" class="actions" th:action="@{|/posts/${post.id}/reaction|}" method="post">
+                <button name="value" value="1" th:classappend="${reaction.mine == 1} ? 'active'"
+                        th:text="#{reaction.likes(${reaction.likes})}"></button>
+                <button name="value" value="-1" th:classappend="${reaction.mine == -1} ? 'active'"
+                        th:text="#{reaction.dislikes(${reaction.dislikes})}"></button>
+                <button th:if="${reaction.mine != 0}" name="value" value="0" th:text="#{reaction.remove}">Retirar</button>
             </form>
-        </div>
-        <div class="audio-preview">
-            <strong th:text="#{post.listenDemo}">Escucha la demo:</strong>
-            <audio controls preload="none" th:src="${post.audioUrl}" style="width:100%" th:text="#{audio.unsupported}">Tu navegador no puede reproducir el audio.</audio>
-            <p th:if="${post.durationInSeconds != null}"
-               th:text="#{post.duration(${post.durationInSeconds})}">Duración: 180 segundos</p>
-        </div>
-        <div class="description" th:text="${post.description != null ? post.description : #messages.msg('post.noDescription')}">
-            Descripción del post.
-        </div>
-    </article>
 
-    <section class="comments-card">
-        <h2 th:text="#{comments.heading}">Comentarios</h2>
-
-        <div th:if="${commentSuccess}" class="alert success" th:text="${commentSuccess}">Comentario publicado.</div>
-        <div th:if="${commentError}" class="alert error" th:text="${commentError}">Error</div>
-
-        <div th:if="${post.comments != null and !post.comments.isEmpty()}">
-            <div th:each="comment : ${post.comments}" class="comment-item">
-                <div class="comment-header">
-                    <span th:text="${comment.author.username}">Usuario</span>
-                    <span th:text="${#temporals.format(comment.createdAt, 'dd MMM yyyy HH:mm')}">Hace 2h</span>
-                </div>
-                <div class="comment-content" th:text="${comment.content}">
-                    Este riff está buenísimo, probá subir un poco el hi-hat.
-                </div>
-                <form th:if="${isOwner}" th:action="@{|/posts/${post.id}/comments/${comment.id}/delete|}" method="post"
-                      style="margin-top:10px;text-align:right;">
-                    <button type="submit" style="border:none;background:rgba(248,113,113,0.2);color:#fecaca;padding:6px 12px;border-radius:999px;font-weight:600;cursor:pointer;" th:text="#{comments.delete}">
-                        Eliminar comentario
-                    </button>
+            <div th:if="${isOwner}" class="actions">
+                <a class="btn" th:href="@{|/posts/${post.id}/edit|}" th:text="#{post.edit}">Editar publicación</a>
+                <form th:action="@{|/posts/${post.id}/delete|}" method="post" th:attr="data-confirm=#{post.confirmDelete}">
+                    <button type="submit" class="btn-danger" th:text="#{post.delete}">Eliminar publicación</button>
                 </form>
             </div>
         </div>
-        <div th:if="${post.comments == null or post.comments.isEmpty()}" class="comment-item" style="text-align:center;" th:text="#{comments.empty}">
-            Aún no hay comentarios. Sé el primero en dar feedback.
-        </div>
-
-        <form th:action="@{|/posts/${post.id}/comments|}" th:object="${commentForm}" method="post">
-            <label for="content" th:text="#{comments.add}">Agregar comentario</label>
-            <textarea id="content" th:field="*{content}" maxlength="280" th:placeholder="#{comments.placeholder}" placeholder="Deja feedback constructivo (máx. 280 caracteres)." required></textarea>
-            <button type="submit" th:text="#{comments.submit}">Comentar</button>
-        </form>
     </section>
-</div>
-<script defer th:src="@{/js/harmony.js}"></script>
+
+    <div class="layout">
+        <section>
+            <h2 th:text="#{comments.heading}">Comentarios</h2>
+
+            <div th:if="${post.comments == null or post.comments.isEmpty()}" class="card muted"
+                 th:text="#{comments.empty}">
+                Aún no hay comentarios. Sé el primero en dar feedback.
+            </div>
+
+            <div th:if="${post.comments != null and !post.comments.isEmpty()}">
+                <article th:each="comment : ${post.comments}" class="comment-card">
+                    <div class="comment-head">
+                        <a th:href="@{|/people/${comment.author.id}|}" class="row-avatar" style="gap:10px;">
+                            <img class="avatar-img avatar-sm"
+                                 th:if="${comment.author.profile != null and !#strings.isEmpty(comment.author.profile.avatarUrl)}"
+                                 th:src="${comment.author.profile.avatarUrl}" th:alt="${comment.author.username}">
+                            <span class="avatar avatar-sm"
+                                  th:if="${comment.author.profile == null or #strings.isEmpty(comment.author.profile.avatarUrl)}"
+                                  th:text="${#strings.substring(comment.author.username,0,1).toUpperCase()}"></span>
+                            <strong th:text="${comment.author.username}">Usuario</strong>
+                        </a>
+                        <div class="actions" style="gap:10px;">
+                            <small class="muted" th:text="${#temporals.format(comment.createdAt, 'dd/MM/yyyy HH:mm')}"></small>
+                            <form th:if="${isOwner}" th:action="@{|/posts/${post.id}/comments/${comment.id}/delete|}" method="post">
+                                <button type="submit" class="btn-danger" style="padding:4px 10px;font-size:12px;"
+                                        th:text="#{comments.delete}">Eliminar comentario</button>
+                            </form>
+                        </div>
+                    </div>
+                    <p class="comment-body" th:text="${comment.content}"></p>
+                </article>
+            </div>
+        </section>
+
+        <aside>
+            <div class="card">
+                <h2 style="margin-top:0;" th:text="#{comments.add}">Agregar comentario</h2>
+                <form th:action="@{|/posts/${post.id}/comments|}" th:object="${commentForm}" method="post">
+                    <label for="content" class="small muted" th:text="#{comments.placeholder}">Deja feedback constructivo (máx. 280 caracteres).</label>
+                    <textarea id="content" th:field="*{content}" maxlength="280" rows="4"
+                              th:placeholder="#{comments.placeholder}" required></textarea>
+                    <button type="submit" class="active" style="width:100%;" th:text="#{comments.submit}">Comentar</button>
+                </form>
+            </div>
+        </aside>
+    </div>
+</main>
 </body>
 </html>
-

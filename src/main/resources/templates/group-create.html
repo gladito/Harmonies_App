@@ -2,154 +2,41 @@
 <html lang="es" th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title th:text="#{groups.createTitle}">Harmony | Crear banda</title>
-    <style>
-        body {
-            margin: 0;
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background: radial-gradient(circle at top left, #1d4ed8 0%, #0f172a 55%, #020617 100%);
-            color: #e2e8f0;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 40px 16px;
-        }
-
-        .card {
-            width: 100%;
-            max-width: 520px;
-            background: rgba(15, 23, 42, 0.88);
-            border: 1px solid rgba(148, 163, 184, 0.18);
-            border-radius: 24px;
-            padding: 36px;
-            box-shadow: 0 35px 70px rgba(15, 23, 42, 0.55);
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .card h1 {
-            margin: 0;
-            font-size: 30px;
-        }
-
-        .card p {
-            margin: 0;
-            color: rgba(226, 232, 240, 0.8);
-        }
-
-        form {
-            display: flex;
-            flex-direction: column;
-            gap: 18px;
-        }
-
-        label {
-            font-weight: 600;
-            color: rgba(226, 232, 240, 0.8);
-        }
-
-        input[type="text"],
-        textarea {
-            width: 100%;
-            padding: 12px 14px;
-            border-radius: 12px;
-            border: 1px solid rgba(148, 163, 184, 0.3);
-            background: rgba(15, 23, 42, 0.6);
-            color: #e2e8f0;
-            font-size: 15px;
-            transition: border-color 0.2s, box-shadow 0.2s;
-            resize: vertical;
-            min-height: 120px;
-        }
-
-        input[type="text"]:focus,
-        textarea:focus {
-            outline: none;
-            border-color: rgba(99, 102, 241, 0.6);
-            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.25);
-        }
-
-        textarea {
-            min-height: 120px;
-        }
-
-        .actions {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .actions a {
-            text-decoration: none;
-            color: #93c5fd;
-            font-weight: 600;
-        }
-
-        button[type="submit"] {
-            border: none;
-            border-radius: 12px;
-            background: linear-gradient(135deg, #22d3ee, #6366f1);
-            color: #020617;
-            font-weight: 700;
-            font-size: 16px;
-            padding: 12px 20px;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        button[type="submit"]:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 18px 34px rgba(99, 102, 241, 0.35);
-        }
-
-        .alert {
-            padding: 12px 16px;
-            border-radius: 12px;
-            background: rgba(248, 113, 113, 0.18);
-            border: 1px solid rgba(248, 113, 113, 0.35);
-            color: #fecaca;
-            font-size: 14px;
-            margin-bottom: 8px;
-        }
-    </style>
-<style>:root{color-scheme:dark}body{background:#080808!important;color:#f8f8ff!important}h1,h2,h3{color:#d4af37!important}a{color:#d4af37!important}.card,.container,.post-card,.comments-card{border-color:#8b7324!important}button{background:#d4af37!important;color:#080808!important}</style></head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="#{groups.createTitle}">Harmony · Crear banda</title>
+    <link rel="stylesheet" th:href="@{/css/harmony.css}">
+</head>
 <body>
-<div class="card">
-    <h1 th:text="#{groups.createHeading}">Crea tu nueva banda</h1>
-    <p th:text="#{groups.createSubtitle}">Reúne a tus colaboradores, establece un nombre y describe el estilo del proyecto.</p>
+<nav th:replace="~{fragments :: nav}"></nav>
+<main style="max-width:680px;">
+    <div class="notice" role="alert" th:if="${createError}" th:text="${createError}"></div>
 
-    <div th:if="${createError}" class="alert" th:text="${createError}">
-        Ocurrió un error al crear la banda.
-    </div>
+    <section class="card hero">
+        <span class="eyebrow" th:text="#{band.eyebrow}">Una banda. Muchos sonidos.</span>
+        <h1 th:text="#{groups.createHeading}">Crea tu nueva banda</h1>
+        <p class="muted" th:text="#{groups.createSubtitle}">Reúne a tus colaboradores, establece un nombre y describe el estilo del proyecto.</p>
+    </section>
 
-    <form th:action="@{/groups}" th:object="${groupForm}" method="post" enctype="multipart/form-data">
-        <div>
+    <section class="card">
+        <form th:action="@{/groups}" th:object="${groupForm}" method="post" enctype="multipart/form-data">
             <label for="name" th:text="#{groups.nameLabel}">Nombre de la banda</label>
             <input id="name" type="text" th:field="*{name}" maxlength="80" placeholder="Ej. Synthwave Collectors" required>
-        </div>
-        <div>
+
             <label for="description" th:text="#{groups.descriptionLabel}">Descripción / estilo</label>
-            <textarea id="description" th:field="*{description}" maxlength="255" placeholder="Describe el sonido o metas de la banda (máx. 255 caracteres)."></textarea>
-        </div>
-        <div>
+            <textarea id="description" th:field="*{description}" maxlength="255"></textarea>
+
             <label for="avatarFile" th:text="#{band.avatarUpload}">Subir foto de la banda (PNG, JPG, WEBP, GIF)</label>
-            <input id="avatarFile" type="file" name="avatarFile" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
-                   style="width:100%;padding:10px;border-radius:12px;border:1px dashed rgba(212,175,55,0.45);background:rgba(15,23,42,0.6);color:#e2e8f0;">
-        </div>
-        <div>
+            <input id="avatarFile" type="file" name="avatarFile" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml">
+
             <label for="avatarUrl" th:text="#{band.avatarUrl}">O enlace de imagen (https://...)</label>
             <input id="avatarUrl" type="text" th:field="*{avatarUrl}" maxlength="255" placeholder="https://...">
-        </div>
-        <div class="actions">
-            <a th:href="@{/home}" th:text="#{common.backToHome}">Volver al inicio</a>
-            <button type="submit" th:text="#{groups.createButton}">Crear banda</button>
-        </div>
-    </form>
-</div>
+
+            <div class="actions" style="justify-content:space-between;margin-top:10px;">
+                <a class="btn" th:href="@{/groups}" th:text="#{common.cancel}">Cancelar</a>
+                <button type="submit" class="active" th:text="#{groups.createButton}">Crear banda</button>
+            </div>
+        </form>
+    </section>
+</main>
 </body>
 </html>
-
-

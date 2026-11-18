@@ -73,6 +73,49 @@ public class DataSeeder implements CommandLineRunner {
         }
         if (em.createQuery("select count(p) from Payment p", Long.class).getSingleResult() == 0) {
             seedSamplePayments();
+        } else {
+            // Si había pagos precargados con comprobantes automáticos HRM- de antes, los dejamos en PENDING_PAYMENT sin comprobante
+            for (Payment p : em.createQuery("select p from Payment p where p.receiptCode like 'HRM-%'", Payment.class).getResultList()) {
+                p.resetToPending();
+            }
+        }
+        ensurePasswordsSplitAcrossTwoTables();
+        if (em.createQuery("select count(f) from UserFollow f", Long.class).getSingleResult() == 0) {
+            seedSampleFollows();
+        }
+    }
+
+    private void seedSampleFollows() {
+        String[][] pairs = {
+            {"gladito", "pepito"}, {"gladito", "camitorres"}, {"gladito", "luciamorales"},
+            {"gladito", "santibenitez"}, {"gladito", "nicofontana"},
+            {"pepito", "gladito"}, {"pepito", "camitorres"}, {"pepito", "martinaq"},
+            {"camitorres", "gladito"}, {"camitorres", "pepito"},
+            {"luciamorales", "gladito"}, {"luciamorales", "francoherrera"}, {"luciamorales", "claramendez"},
+            {"santibenitez", "gladito"}, {"santibenitez", "nachopaez"},
+            {"nicofontana", "gladito"}, {"elenavarela", "gladito"}, {"rodrigopaz", "gladito"}
+        };
+        for (String[] pair : pairs) {
+            User follower = demoUser(pair[0]);
+            User target = demoUser(pair[1]);
+            if (follower != null && target != null) {
+                try {
+                    community.follow(follower.getId(), target.getId(), true);
+                } catch (Exception ignored) {}
+            }
+        }
+    }
+
+    /**
+     * Garantiza que todos los usuarios existentes en la base tengan su hash BCrypt
+     * dividido entre la tabla users (Parte 1) y la tabla user_password_parts (Parte 2).
+     */
+    private void ensurePasswordsSplitAcrossTwoTables() {
+        for (User u : userRepository.findAll()) {
+            if (u.getPasswordPart() == null && u.getPasswordPart1() != null && u.getPasswordPart1().length() > 35) {
+                u.setPassword(u.getPasswordPart1());
+                userRepository.save(u);
+            }
         }
     }
 
@@ -82,14 +125,13 @@ public class DataSeeder implements CommandLineRunner {
         for (StudioBooking b : em.createQuery("select b from StudioBooking b join fetch b.user join fetch b.studio s join fetch s.owner", StudioBooking.class).getResultList()) {
             if (paymentService.findByReference(PaymentConceptType.STUDIO_BOOKING, b.getId()).isEmpty()) {
                 PaymentMethod method = methods[idx % methods.length];
-                boolean payImmediately = (idx % 3 != 2); // Deja al menos una reserva pendiente de pago para demostrar el flujo
-                Payment p = paymentService.createOrder(
+                paymentService.createOrder(
                         PaymentConceptType.STUDIO_BOOKING,
                         b.getId(),
                         "Reserva de sala: " + b.getStudio().getName() + " (" + b.getHours() + " h)",
                         b.getTotalPrice(),
                         method,
-                        payImmediately,
+                        false,
                         b.getUser(),
                         b.getStudio().getOwner()
                 );
@@ -109,7 +151,7 @@ public class DataSeeder implements CommandLineRunner {
                         "Contratación: " + a.getJob().getTitle() + " (" + a.getApplicant().getUsername() + ")",
                         amt,
                         PaymentMethod.BANK_TRANSFER,
-                        true,
+                        false,
                         a.getJob().getAuthor(),
                         a.getApplicant()
                 );

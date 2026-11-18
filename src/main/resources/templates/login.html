@@ -137,6 +137,10 @@
     </form>
 
     <div class="register-link">
+        <div style="margin-bottom:10px;">
+            <span th:text="#{login.forgotPrompt}">¿Olvidaste tu contraseña?</span>
+            <a th:href="@{/forgot-password}" th:text="#{login.forgotLink}">Recuperar contraseña</a>
+        </div>
         <span th:text="#{login.noAccount}">¿No tienes cuenta?</span>
         <a th:href="@{/register}" th:text="#{login.createOne}">Crea una ahora</a>
         <div style="margin-top:12px;">

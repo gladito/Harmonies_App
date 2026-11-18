@@ -2,186 +2,74 @@
 <html lang="es" th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title th:text="#{explore.title}">Harmony | Explorar bandas</title>
-    <style>
-        body {
-            margin: 0;
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background: radial-gradient(circle at top left, #22d3ee 0%, #0f172a 55%, #020617 100%);
-            color: #e2e8f0;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 22px 48px;
-            background: rgba(2, 6, 23, 0.75);
-            backdrop-filter: blur(12px);
-            border-bottom: 1px solid rgba(148, 163, 184, 0.15);
-        }
-
-        header h1 {
-            margin: 0;
-            font-size: 26px;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 16px;
-        }
-
-        .nav-links a {
-            text-decoration: none;
-            color: #e2e8f0;
-            padding: 10px 18px;
-            border-radius: 999px;
-            background: rgba(148, 163, 184, 0.2);
-            border: 1px solid rgba(148, 163, 184, 0.3);
-            font-weight: 600;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .nav-links a:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 24px rgba(148, 163, 184, 0.25);
-        }
-
-        main {
-            flex: 1;
-            padding: 40px 56px 72px;
-        }
-
-        .headline {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 16px;
-            margin-bottom: 32px;
-        }
-
-        .headline h2 {
-            margin: 0;
-            font-size: 32px;
-        }
-
-        .grid {
-            display: grid;
-            gap: 24px;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-        }
-
-        .card {
-            background: rgba(15, 23, 42, 0.85);
-            border-radius: 20px;
-            padding: 24px;
-            border: 1px solid rgba(148, 163, 184, 0.12);
-            box-shadow: 0 25px 55px rgba(15, 23, 42, 0.5);
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .card h3 {
-            margin: 0;
-            font-size: 22px;
-        }
-
-        .card p {
-            margin: 0;
-            color: rgba(226, 232, 240, 0.8);
-            line-height: 1.5;
-        }
-
-        .meta {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            color: rgba(148, 163, 184, 0.85);
-            font-size: 13px;
-        }
-
-        form button {
-            margin-top: 8px;
-            border: none;
-            border-radius: 12px;
-            background: linear-gradient(135deg, #6366f1, #22d3ee);
-            color: #020617;
-            font-weight: 700;
-            font-size: 15px;
-            padding: 10px 18px;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        form button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 30px rgba(99, 102, 241, 0.35);
-        }
-
-        .empty-state {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 32px;
-            background: rgba(15, 23, 42, 0.65);
-            border: 1px dashed rgba(148, 163, 184, 0.4);
-            border-radius: 24px;
-            text-align: center;
-        }
-    </style>
-<style>:root{color-scheme:dark}body{background:#080808!important;color:#f8f8ff!important}h1,h2,h3{color:#d4af37!important}a{color:#d4af37!important}.card,.container,.post-card,.comments-card{border-color:#8b7324!important}button{background:#d4af37!important;color:#080808!important}</style></head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="#{explore.title}">Harmony · Explorar bandas</title>
+    <link rel="stylesheet" th:href="@{/css/harmony.css}">
+</head>
 <body>
-<header>
-    <h1 th:text="'Explorar bandas (' + ${username} + ')'">Explorar bandas</h1>
-    <div class="nav-links">
-        <a th:href="@{/groups}" th:text="#{nav.bands}">Mis bandas</a>
-        <a th:href="@{/home}" th:text="#{common.home}">Inicio</a>
-    </div>
-</header>
+<nav th:replace="~{fragments :: nav}"></nav>
 <main>
-    <div class="headline">
-        <h2 th:text="#{explore.heading}">Únete a un nuevo proyecto</h2>
-        <div class="nav-links" style="gap:12px;">
-            <span th:if="${createSuccess}" th:text="${createSuccess}" style="background: rgba(22, 163, 74, 0.2); color: #bbf7d0; border: 1px solid rgba(22, 163, 74, 0.4); padding: 10px 18px; border-radius: 999px;">Solicitud enviada</span>
-            <span th:if="${createError}" th:text="${createError}" style="background: rgba(248, 113, 113, 0.18); color: #fecaca; border: 1px solid rgba(248, 113, 113, 0.35); padding: 10px 18px; border-radius: 999px;">Error</span>
-        </div>
-    </div>
+    <div class="notice" role="status" th:if="${createSuccess}" th:text="${createSuccess}"></div>
+    <div class="notice" role="status" th:if="${createError}" th:text="${createError}"></div>
 
-    <div th:if="${hasAvailable}" class="grid">
-        <div th:each="group : ${availableGroups}" class="card">
-            <div class="meta">
-                <span th:text="#{home.memberCount(${group.memberCount})}">Integrantes: 1</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:14px;">
+    <section class="card hero">
+        <span class="eyebrow" th:text="#{band.eyebrow}">Una banda. Muchos sonidos.</span>
+        <h1 th:text="#{explore.heading}">Únete a un nuevo proyecto</h1>
+        <p class="muted" th:text="#{explore.emptyText}">Crea una nueva banda o espera a que la comunidad abra más proyectos.</p>
+        <div class="actions" style="margin-top:16px;">
+            <a class="btn" th:href="@{/groups}" th:text="#{nav.bands}">Mis bandas</a>
+            <a class="btn" th:href="@{/groups/new}" th:text="#{groups.create}">Crear banda</a>
+            <a class="btn" th:href="@{/groups/requests}" th:text="#{groups.pendingRequests}">Solicitudes recibidas</a>
+        </div>
+    </section>
+
+    <section th:if="${hasAvailable}" class="band-grid">
+        <article th:each="group : ${availableGroups}" class="band-card">
+            <div class="band-card-head">
                 <a th:href="@{|/bands/${group.id}|}">
-                    <img th:if="${!#strings.isEmpty(group.avatarUrl)}" th:src="${group.avatarUrl}" th:alt="${group.name}"
-                         style="width:58px;height:58px;border-radius:50%;object-fit:cover;border:2px solid #d4af37;">
-                    <span th:if="${#strings.isEmpty(group.avatarUrl)}"
-                          th:text="${#strings.substring(group.name,0,1).toUpperCase()}"
-                          style="display:inline-grid;place-items:center;width:58px;height:58px;border-radius:50%;border:2px solid #d4af37;color:#d4af37;font:700 22px Georgia,serif;background:#17140a;"></span>
+                    <img class="avatar-img avatar-md" style="width:68px;height:68px;min-width:68px;"
+                         th:if="${!#strings.isEmpty(group.avatarUrl)}" th:src="${group.avatarUrl}" th:alt="${group.name}">
+                    <span class="avatar avatar-md" style="width:68px;height:68px;min-width:68px;"
+                          th:if="${#strings.isEmpty(group.avatarUrl)}"
+                          th:text="${#strings.substring(group.name,0,1).toUpperCase()}"></span>
                 </a>
-                <h3><a th:href="@{|/bands/${group.id}|}" th:text="${group.name}">Nombre de la banda</a></h3>
+                <div class="band-card-title">
+                    <span class="pill" th:text="#{home.memberCount(${group.memberCount})}">1 integrantes</span>
+                    <h3><a th:href="@{|/bands/${group.id}|}" th:text="${group.name}">Nombre de la banda</a></h3>
+                </div>
             </div>
-            <p th:text="${group.description != null ? group.description : #messages.msg('groups.noDescription')}">
-                Sin descripción por ahora.
-            </p>
-            <form th:action="@{|/groups/${group.id}/request|}" method="post">
-                <label for="message" style="display:block;font-weight:600;color:#cbd5f5;margin-bottom:6px;" th:text="#{explore.messageLabel}">Mensaje para el líder</label>
-                <textarea name="message" rows="3" placeholder="Cuenta brevemente por qué quieres unirte (opcional)" style="width:100%;padding:12px;border-radius:12px;border:1px solid rgba(148,163,184,0.2);background:rgba(15,23,42,0.65);color:#e2e8f0;"></textarea>
-                <button type="submit" th:text="#{explore.sendRequest}">Enviar solicitud</button>
-            </form>
-        </div>
-    </div>
 
-    <div th:if="${!hasAvailable}" class="empty-state">
-        <h3 th:text="#{explore.emptyTitle}">Ya formas parte de todas las bandas disponibles</h3>
-        <p th:text="#{explore.emptyText}">Crea una nueva banda o espera a que la comunidad abra más proyectos.</p>
+            <p style="margin:0;color:#d6d3cb;"
+               th:text="${!#strings.isEmpty(group.description) ? group.description : #messages.msg('groups.noDescription')}"></p>
+
+            <div class="member-section" th:if="${group.members != null and !group.members.isEmpty()}">
+                <strong class="member-section-title" th:text="#{groups.membersHeading}">Miembros</strong>
+                <div class="member-chips">
+                    <a th:each="member : ${group.members}" th:href="@{|/people/${member.id}|}" class="member-chip">
+                        <img class="avatar-img" style="width:24px;height:24px;min-width:24px;border-width:1px;"
+                             th:if="${!#strings.isEmpty(member.avatarUrl)}" th:src="${member.avatarUrl}" th:alt="${member.username}">
+                        <span class="avatar" style="width:24px;height:24px;min-width:24px;font-size:11px;border-width:1px;"
+                              th:if="${#strings.isEmpty(member.avatarUrl)}"
+                              th:text="${#strings.substring(member.username,0,1).toUpperCase()}"></span>
+                        <span th:text="${member.username + (member.owner ? ' ' + #messages.msg('groups.leader') : '')}"></span>
+                    </a>
+                </div>
+            </div>
+
+            <form th:action="@{|/groups/${group.id}/request|}" method="post"
+                  style="margin-top:auto;padding-top:12px;border-top:1px solid #2c2514;">
+                <label class="small" style="color:var(--gold);font-weight:600;" th:text="#{explore.messageLabel}">Mensaje para el líder</label>
+                <textarea name="message" rows="2" maxlength="255" style="min-height:68px;"
+                          th:placeholder="#{explore.messageLabel}"></textarea>
+                <button type="submit" class="active" style="width:100%" th:text="#{explore.sendRequest}">Enviar solicitud</button>
+            </form>
+        </article>
+    </section>
+
+    <div th:if="${!hasAvailable}" class="card" style="text-align:center;padding:42px 24px;">
+        <h2 style="margin-top:0" th:text="#{explore.emptyTitle}">Ya formas parte de todas las bandas disponibles</h2>
+        <p class="muted" th:text="#{explore.emptyText}">Crea una nueva banda o espera a que la comunidad abra más proyectos.</p>
     </div>
 </main>
 </body>
 </html>
-

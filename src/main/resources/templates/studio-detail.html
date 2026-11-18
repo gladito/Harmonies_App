@@ -52,21 +52,49 @@
                         <span th:if="${bookingPayments[b.id] != null and bookingPayments[b.id].receiptCode != null}"
                               class="muted" th:text="| · #{payments.receipt} ${bookingPayments[b.id].receiptCode}|"></span>
                     </p>
-                    <form th:if="${b.user.id == me and bookingPayments[b.id] != null and bookingPayments[b.id].status.name() == 'PENDING_PAYMENT'}"
-                          th:action="@{|/payments/${bookingPayments[b.id].id}/pay|}" method="post" style="margin:8px 0">
-                        <input type="hidden" name="back" th:value="|/studios/${studio.id}|">
-                        <div class="actions">
-                            <select name="paymentMethod" style="width:auto;margin:0">
+
+                    <div class="card" style="margin:10px 0;background:#0d0d0d;"
+                         th:if="${b.user.id == me and bookingPayments[b.id] != null and bookingPayments[b.id].status.name() == 'PENDING_PAYMENT'}">
+                        <form th:action="@{|/payments/${bookingPayments[b.id].id}/pay|}" method="post">
+                            <input type="hidden" name="back" th:value="|/studios/${studio.id}|">
+                            <label th:text="#{payments.methodLabel}">Método de pago</label>
+                            <select name="paymentMethod">
                                 <option th:each="m : ${methods}" th:value="${m}"
                                         th:selected="${bookingPayments[b.id].paymentMethod == m}"
                                         th:text="#{${'payment.method.' + m}}"></option>
                             </select>
-                            <button type="submit" class="active" th:text="#{payments.payButton}">Confirmar y abonar</button>
-                        </div>
-                    </form>
+
+                            <div class="pay-transfer-fields" th:style="${bookingPayments[b.id].paymentMethod.name() == 'CARD'} ? 'display:none' : 'display:block'">
+                                <div class="member-section" style="margin-bottom:10px;font-size:13px;">
+                                    <div><strong style="color:var(--gold);" th:text="#{payments.destAlias}">Alias de destino:</strong>
+                                        <code th:text="|${studio.owner.username}.harmony.mp|"></code></div>
+                                    <div><strong style="color:var(--gold);" th:text="#{payments.destCbu}">CBU / CVU:</strong>
+                                        <code th:text="|0000003100084920155${studio.owner.id}|"></code></div>
+                                </div>
+                                <label th:text="#{payments.operationRefLabel}">N° de operación / comprobante de la transferencia</label>
+                                <input type="text" name="operationReference" maxlength="50"
+                                       th:required="${bookingPayments[b.id].paymentMethod.name() != 'CARD'}"
+                                       th:placeholder="#{payments.operationRefPlaceholder}">
+                            </div>
+
+                            <div class="pay-card-fields" th:style="${bookingPayments[b.id].paymentMethod.name() == 'CARD'} ? 'display:block' : 'display:none'">
+                                <label th:text="#{payments.cardHolderLabel}">Nombre y apellido del titular de la tarjeta</label>
+                                <input type="text" name="cardHolder" maxlength="60"
+                                       th:required="${bookingPayments[b.id].paymentMethod.name() == 'CARD'}"
+                                       th:placeholder="#{payments.cardHolderPlaceholder}">
+                                <label th:text="#{payments.cardNumberLabel}">Número de tarjeta (16 dígitos o últimos 4)</label>
+                                <input type="text" name="cardNumber" maxlength="24"
+                                       th:required="${bookingPayments[b.id].paymentMethod.name() == 'CARD'}"
+                                       th:placeholder="#{payments.cardNumberPlaceholder}">
+                            </div>
+
+                            <button type="submit" class="active" th:text="#{payments.registerPaymentBtn}">Registrar pago y guardar comprobante</button>
+                        </form>
+                    </div>
+
                     <form th:if="${b.upcoming and (isOwner or b.user.id == me)}" th:action="@{|/studios/bookings/${b.id}/cancel|}" method="post" th:attr="data-confirm=#{booking.confirmCancel}">
                         <input type="hidden" name="back" th:value="|/studios/${studio.id}|">
-                        <button th:text="#{booking.cancel}">Cancelar reserva</button>
+                        <button class="btn-danger" th:text="#{booking.cancel}">Cancelar reserva</button>
                     </form>
                 </div>
             </div>
@@ -87,11 +115,7 @@
                     <select id="paymentMethod" name="paymentMethod">
                         <option th:each="m : ${methods}" th:value="${m}" th:text="#{${'payment.method.' + m}}"></option>
                     </select>
-                    <label style="display:flex;align-items:center;gap:8px;margin-bottom:14px;cursor:pointer;">
-                        <input type="checkbox" name="payNow" value="true" checked>
-                        <span th:text="#{payments.payNowCheck}">Abonar ahora en el acto y emitir comprobante</span>
-                    </label>
-                    <button th:text="#{booking.submit}">Confirmar reserva</button>
+                    <button class="active" style="width:100%;" th:text="#{booking.submit}">Confirmar reserva</button>
                 </form>
             </div>
 
@@ -99,12 +123,11 @@
                 <h2 th:text="#{studio.manage}">Administrar sala</h2>
                 <p class="muted" th:text="#{studio.manageText}">Ves quién reservó cada horario y podés cancelar reservas.</p>
                 <form th:action="@{|/studios/${studio.id}/delete|}" method="post" th:attr="data-confirm=#{studio.confirmDelete}">
-                    <button th:text="#{studio.delete}">Quitar publicación</button>
+                    <button class="btn-danger" th:text="#{studio.delete}">Quitar publicación</button>
                 </form>
             </div>
         </aside>
     </div>
 </main>
-<script th:src="@{/js/harmony.js}"></script>
 </body>
 </html>

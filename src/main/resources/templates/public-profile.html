@@ -5,15 +5,51 @@
     <div class="avatar avatar-lg" th:if="${#strings.isEmpty(person.avatarUrl)}" th:text="${#strings.substring(person.username,0,1).toUpperCase()}"></div>
     <div class="hero-header-info">
       <span class="eyebrow" th:text="#{profile.eyebrow}">Perfil de músico</span>
-      <h1 th:text="${person.username}"></h1>
+      <div class="actions" style="justify-content:space-between;">
+        <h1 style="margin:6px 0;" th:text="${person.username}"></h1>
+        <form th:if="${!mine and !blockedByMe}" th:action="@{|/people/${person.id}/follow|}" method="post">
+          <input type="hidden" name="following" th:value="${!follow.followedByMe}">
+          <button type="submit" th:classappend="${!follow.followedByMe} ? 'active'"
+                  th:text="${follow.followedByMe} ? #{follow.unfollowButton} : #{follow.followButton}">Seguir</button>
+        </form>
+      </div>
       <p th:text="${person.bio} ?: #{profile.emptyBio}"></p>
-      <p th:if="${rating.count > 0}" th:text="#{rating.summary(${#numbers.formatDecimal(rating.average,1,1)},${rating.count})}"></p>
-      <p th:if="${rating.count == 0}" class="muted" th:text="#{profile.noRatings}">Sin calificaciones todavía</p>
+      <div class="actions" style="gap:12px;">
+        <span class="pill" th:text="#{follow.summary(${follow.followersCount},${follow.followingCount})}">0 seguidores · 0 siguiendo</span>
+        <span class="pill" th:if="${rating.count > 0}" th:text="#{rating.summary(${#numbers.formatDecimal(rating.average,1,1)},${rating.count})}"></span>
+        <span class="muted small" th:if="${rating.count == 0}" th:text="#{profile.noRatings}">Sin calificaciones todavía</span>
+      </div>
     </div>
   </div>
 </section>
 <div class="layout"><section><h2 th:text="#{profile.posts}">Publicaciones</h2><div class="card" th:if="${#lists.isEmpty(posts)}" th:text="#{posts.empty}">Todavía no hay publicaciones visibles.</div><article class="card" th:each="p : ${posts}"><h3><a th:href="@{|/posts/${p.id}|}" th:text="${p.title}"></a></h3><p th:text="${p.description}"></p><audio controls preload="none" th:src="${p.audioUrl}"></audio></article></section>
 <aside>
+<div class="card">
+  <h3 style="margin-top:0;" th:text="|#{follow.followersHeading} (${follow.followersCount})|">Seguidores</h3>
+  <p class="small muted" th:if="${#lists.isEmpty(followers)}" th:text="#{follow.noFollowers}">Todavía no tiene seguidores.</p>
+  <div class="member-chips" th:if="${!#lists.isEmpty(followers)}" style="margin-bottom:16px;">
+    <a th:each="u : ${followers}" th:href="@{|/people/${u.id}|}" class="member-chip">
+      <img class="avatar-img" style="width:24px;height:24px;min-width:24px;border-width:1px;"
+           th:if="${!#strings.isEmpty(u.avatarUrl)}" th:src="${u.avatarUrl}" th:alt="${u.username}">
+      <span class="avatar" style="width:24px;height:24px;min-width:24px;font-size:11px;border-width:1px;"
+            th:if="${#strings.isEmpty(u.avatarUrl)}" th:text="${#strings.substring(u.username,0,1).toUpperCase()}"></span>
+      <span th:text="${u.username}"></span>
+    </a>
+  </div>
+  <hr>
+  <h3 th:text="|#{follow.followingHeading} (${follow.followingCount})|">Siguiendo</h3>
+  <p class="small muted" style="margin-bottom:0;" th:if="${#lists.isEmpty(followingList)}" th:text="#{follow.notFollowingAnyone}">Todavía no sigue a ningún músico.</p>
+  <div class="member-chips" th:if="${!#lists.isEmpty(followingList)}">
+    <a th:each="u : ${followingList}" th:href="@{|/people/${u.id}|}" class="member-chip">
+      <img class="avatar-img" style="width:24px;height:24px;min-width:24px;border-width:1px;"
+           th:if="${!#strings.isEmpty(u.avatarUrl)}" th:src="${u.avatarUrl}" th:alt="${u.username}">
+      <span class="avatar" style="width:24px;height:24px;min-width:24px;font-size:11px;border-width:1px;"
+            th:if="${#strings.isEmpty(u.avatarUrl)}" th:text="${#strings.substring(u.username,0,1).toUpperCase()}"></span>
+      <span th:text="${u.username}"></span>
+    </a>
+  </div>
+</div>
+
 <div class="card" th:if="${mine}">
   <h2 th:text="#{profile.presentation}">Tu presentación</h2>
   <form th:action="@{/profile/bio}" method="post">

@@ -24,7 +24,10 @@ public class HomeController {
     }
 
     @GetMapping("/home")
-    public String home(HttpSession session, Model model, @org.springframework.web.bind.annotation.RequestParam(defaultValue="0") int page, @org.springframework.web.bind.annotation.RequestParam(defaultValue="") String tag) {
+    public String home(HttpSession session, Model model,
+                       @org.springframework.web.bind.annotation.RequestParam(defaultValue="0") int page,
+                       @org.springframework.web.bind.annotation.RequestParam(defaultValue="") String tag,
+                       @org.springframework.web.bind.annotation.RequestParam(defaultValue="false") boolean following) {
         Long userId = (Long) session.getAttribute("userId");
         if (userId == null) {
             return "redirect:/login";
@@ -33,9 +36,10 @@ public class HomeController {
         String username = (String) session.getAttribute("username");
         model.addAttribute("username", username);
 
-        var result=postService.feed(userId,page,tag);
+        var result=postService.feed(userId,page,tag,following);
         List<PostFeedResponseDto> feed = result.posts();
         model.addAttribute("page",result.page());model.addAttribute("hasMore",result.hasMore());model.addAttribute("tag",result.tag());
+        model.addAttribute("onlyFollowing",following);
         model.addAttribute("feed", feed);
         model.addAttribute("reactions",community.reactions(feed.stream().map(PostFeedResponseDto::getId).toList(),userId));
 

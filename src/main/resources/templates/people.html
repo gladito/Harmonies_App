@@ -4,7 +4,32 @@
     <span class="avatar avatar-md" th:if="${#strings.isEmpty(p.avatarUrl)}" th:text="${#strings.substring(p.username,0,1).toUpperCase()}"></span>
   </a>
   <div class="row-avatar-info">
-    <h2 style="margin:0 0 4px"><a th:href="@{|/people/${p.id}|}" th:text="${p.username}"></a></h2>
+    <div class="actions" style="justify-content:space-between;">
+      <div class="actions" style="gap:8px;">
+        <h2 style="margin:0 0 4px"><a th:href="@{|/people/${p.id}|}" th:text="${p.username}"></a></h2>
+        <span class="status status-confirmed" th:if="${followedIds != null and followedIds.contains(p.id)}" th:text="#{follow.followingBadge}">Siguiendo</span>
+      </div>
+      <form th:if="${me != null and p.id != me}" th:action="@{|/people/${p.id}/follow|}" method="post">
+        <input type="hidden" name="back" value="people">
+        <input type="hidden" name="following" th:value="${followedIds == null or !followedIds.contains(p.id)}">
+        <button type="submit" th:classappend="${followedIds == null or !followedIds.contains(p.id)} ? 'active'"
+                th:text="${followedIds != null and followedIds.contains(p.id)} ? #{follow.unfollowButton} : #{follow.followButton}">Seguir</button>
+      </form>
+    </div>
     <p style="margin:0" th:text="${p.bio}"></p>
   </div>
-</article></section><aside><div class="card"><h2 th:text="#{people.blocked}">Usuarios bloqueados</h2><p th:if="${#lists.isEmpty(blocked)}" class="muted" th:text="#{people.none}">No bloqueaste a nadie.</p><form th:each="p : ${blocked}" th:action="@{|/people/${p.id}/block|}" method="post"><p th:text="${p.username}"></p><input type="hidden" name="blocked" value="false"><button th:text="#{people.unblock}">Desbloquear</button></form></div></aside></div></main></body></html>
+</article></section><aside>
+<div class="card">
+  <h2 style="margin-top:0;" th:text="#{follow.followingHeading}">Siguiendo</h2>
+  <p th:if="${#lists.isEmpty(followingUsers)}" class="muted" th:text="#{follow.notFollowingAnyone}">Todavía no sigue a ningún músico.</p>
+  <div class="member-chips" th:if="${!#lists.isEmpty(followingUsers)}">
+    <a th:each="u : ${followingUsers}" th:href="@{|/people/${u.id}|}" class="member-chip">
+      <img class="avatar-img" style="width:24px;height:24px;min-width:24px;border-width:1px;"
+           th:if="${!#strings.isEmpty(u.avatarUrl)}" th:src="${u.avatarUrl}" th:alt="${u.username}">
+      <span class="avatar" style="width:24px;height:24px;min-width:24px;font-size:11px;border-width:1px;"
+            th:if="${#strings.isEmpty(u.avatarUrl)}" th:text="${#strings.substring(u.username,0,1).toUpperCase()}"></span>
+      <span th:text="${u.username}"></span>
+    </a>
+  </div>
+</div>
+<div class="card"><h2 th:text="#{people.blocked}">Usuarios bloqueados</h2><p th:if="${#lists.isEmpty(blocked)}" class="muted" th:text="#{people.none}">No bloqueaste a nadie.</p><form th:each="p : ${blocked}" th:action="@{|/people/${p.id}/block|}" method="post"><p th:text="${p.username}"></p><input type="hidden" name="blocked" value="false"><button th:text="#{people.unblock}">Desbloquear</button></form></div></aside></div></main></body></html>

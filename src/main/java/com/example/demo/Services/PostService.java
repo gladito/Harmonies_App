@@ -172,6 +172,12 @@ public class PostService {
         dto.setDurationInSeconds(post.getDurationInSeconds());
         dto.setAuthorUsername(post.getAuthor() != null ? post.getAuthor().getUsername() : "Usuario desconocido");
         dto.setAuthorAvatarUrl(post.getAuthor() != null && post.getAuthor().getProfile() != null ? post.getAuthor().getProfile().getAvatarUrl() : null);
+        if (post.getBand() != null && !post.getBand().isDeleted()) {
+            dto.setBandId(post.getBand().getId());
+            dto.setBandName(post.getBand().getName());
+            dto.setBandAvatarUrl(post.getBand().getAvatarUrl());
+        }
+        dto.setTags(post.getTags().stream().map(com.example.demo.Models.Tag::getValue).sorted().toList());
         dto.setCreatedAt(post.getCreatedAt());
         dto.setComments(post.getComments().stream()
                 .filter(comment -> !comment.isDeleted() && community.canSeeUser(viewer,comment.getAuthor().getId()))
@@ -187,12 +193,17 @@ public class PostService {
     public record FeedPage(java.util.List<PostFeedResponseDto> posts,int page,boolean hasMore,String tag) {}
     @Transactional(readOnly=true)
     public FeedPage feed(Long viewer,int requestedPage,String tag) {
+        return feed(viewer,requestedPage,tag,false);
+    }
+    @Transactional(readOnly=true)
+    public FeedPage feed(Long viewer,int requestedPage,String tag,boolean onlyFollowing) {
         community.user(viewer);
         int page=Math.max(0,Math.min(requestedPage,10000));
         String filter=tag==null?"":tag.trim().toLowerCase(java.util.Locale.ROOT);
         if(filter.length()>50)throw new IllegalArgumentException("Etiqueta demasiado larga");
         String hql="select p from Post p join fetch p.author a left join fetch p.band b where p.deleted=false and a.deleted=false and a.enabled=true and p.visibility=:visibility and (b is null or b.deleted=false) and not exists (select block.id from UserBlock block where block.owner=a and block.target.id=:viewer) ";
         if(!filter.isEmpty())hql+="and exists (select t.id from Post tagged join tagged.tags t where tagged=p and t.value=:tag) ";
+        if(onlyFollowing)hql+="and exists (select f.id from UserFollow f where f.follower.id=:viewer and f.target=a) ";
         var query=em.createQuery(hql+"order by p.createdAt desc,p.id desc",Post.class).setParameter("visibility",Visibility.PUBLIC).setParameter("viewer",viewer);
         if(!filter.isEmpty())query.setParameter("tag",filter);
         var rows=query.setFirstResult(page*12).setMaxResults(13).getResultList();

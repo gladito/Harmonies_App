@@ -100,7 +100,7 @@ public class StudioService {
     }
 
     public StudioBooking book(Long actor, Long studioId, String start, Integer hours) {
-        return book(actor, studioId, start, hours, PaymentMethod.MERCADO_PAGO, true);
+        return book(actor, studioId, start, hours, PaymentMethod.BANK_TRANSFER, false);
     }
 
     public StudioBooking book(Long actor, Long studioId, String start, Integer hours, PaymentMethod method, boolean payNow) {

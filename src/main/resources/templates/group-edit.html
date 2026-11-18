@@ -2,145 +2,49 @@
 <html lang="es" th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title th:text="#{groups.editTitle}">Harmony | Editar banda</title>
-    <style>
-        body {
-            margin: 0;
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background: radial-gradient(circle at top, #1e40af 0%, #0f172a 55%, #020617 100%);
-            color: #e2e8f0;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 40px 16px;
-        }
-
-        .card {
-            width: 100%;
-            max-width: 520px;
-            background: rgba(15, 23, 42, 0.9);
-            border-radius: 24px;
-            padding: 36px;
-            border: 1px solid rgba(148, 163, 184, 0.18);
-            box-shadow: 0 30px 60px rgba(15, 23, 42, 0.6);
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .card h1 {
-            margin: 0;
-            font-size: 30px;
-        }
-
-        label {
-            font-weight: 600;
-            color: rgba(226, 232, 240, 0.85);
-        }
-
-        input[type="text"],
-        textarea {
-            width: 100%;
-            padding: 12px 14px;
-            border-radius: 12px;
-            border: 1px solid rgba(148, 163, 184, 0.25);
-            background: rgba(15, 23, 42, 0.65);
-            color: #e2e8f0;
-            font-size: 15px;
-            transition: border-color 0.2s, box-shadow 0.2s;
-            resize: vertical;
-        }
-
-        textarea {
-            min-height: 120px;
-        }
-
-        input:focus,
-        textarea:focus {
-            outline: none;
-            border-color: rgba(99, 102, 241, 0.6);
-            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.25);
-        }
-
-        .actions {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .actions a {
-            text-decoration: none;
-            color: #93c5fd;
-            font-weight: 600;
-        }
-
-        button[type="submit"] {
-            border: none;
-            border-radius: 12px;
-            background: linear-gradient(135deg, #22d3ee, #6366f1);
-            color: #020617;
-            font-weight: 700;
-            font-size: 16px;
-            padding: 12px 20px;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        button[type="submit"]:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 18px 36px rgba(99, 102, 241, 0.35);
-        }
-
-        .alert {
-            padding: 12px 16px;
-            border-radius: 12px;
-            margin-bottom: 12px;
-            font-size: 14px;
-            background: rgba(248, 113, 113, 0.18);
-            color: #fecaca;
-            border: 1px solid rgba(248, 113, 113, 0.35);
-        }
-    </style>
-<style>:root{color-scheme:dark}body{background:#080808!important;color:#f8f8ff!important}h1,h2,h3{color:#d4af37!important}a{color:#d4af37!important}.card,.container,.post-card,.comments-card{border-color:#8b7324!important}button{background:#d4af37!important;color:#080808!important}</style></head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="#{groups.editTitle}">Harmony · Editar banda</title>
+    <link rel="stylesheet" th:href="@{/css/harmony.css}">
+</head>
 <body>
-<div class="card">
-    <h1 th:text="#{groups.editHeading}">Editar banda</h1>
-    <p style="margin:0;color:rgba(226,232,240,0.75);" th:text="#{groups.editSubtitle}">Actualiza el nombre y la descripción de tu banda.</p>
+<nav th:replace="~{fragments :: nav}"></nav>
+<main style="max-width:680px;">
+    <div class="notice" role="alert" th:if="${createError}" th:text="${createError}"></div>
 
-    <div th:if="${createError}" class="alert" th:text="${createError}">Error</div>
+    <section class="card hero">
+        <span class="eyebrow" th:text="#{band.eyebrow}">Una banda. Muchos sonidos.</span>
+        <h1 th:text="#{groups.editHeading}">Editar banda</h1>
+        <p class="muted" th:text="#{groups.editSubtitle}">Actualiza el nombre y la descripción de tu banda.</p>
+    </section>
 
-    <form th:action="@{|/groups/${groupId}/edit|}" th:object="${groupForm}" method="post" enctype="multipart/form-data">
-        <div th:if="${!#strings.isEmpty(groupForm.avatarUrl)}" style="display:flex;align-items:center;gap:14px;">
-            <img th:src="${groupForm.avatarUrl}" alt="Avatar" style="width:68px;height:68px;border-radius:50%;object-fit:cover;border:2px solid #d4af37;">
-            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
-                <input type="checkbox" name="removeAvatar" value="true">
-                <span th:text="#{band.avatarRemove}">Quitar foto de la banda</span>
-            </label>
-        </div>
+    <section class="card">
+        <form th:action="@{|/groups/${groupId}/edit|}" th:object="${groupForm}" method="post" enctype="multipart/form-data">
+            <div th:if="${!#strings.isEmpty(groupForm.avatarUrl)}" class="row-avatar" style="margin-bottom:16px;">
+                <img class="avatar-img avatar-md" th:src="${groupForm.avatarUrl}" alt="Avatar">
+                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                    <input type="checkbox" name="removeAvatar" value="true">
+                    <span th:text="#{band.avatarRemove}">Quitar foto de la banda</span>
+                </label>
+            </div>
 
-        <label for="name" th:text="#{groups.nameLabel}">Nombre de la banda</label>
-        <input id="name" type="text" th:field="*{name}" placeholder="Nombre de la banda" required>
+            <label for="name" th:text="#{groups.nameLabel}">Nombre de la banda</label>
+            <input id="name" type="text" th:field="*{name}" maxlength="80" required>
 
-        <label for="description" th:text="#{band.description}">Descripción</label>
-        <textarea id="description" th:field="*{description}" maxlength="255"
-                  placeholder="Describe el estilo o metas de tu banda."></textarea>
+            <label for="description" th:text="#{band.description}">Descripción</label>
+            <textarea id="description" th:field="*{description}" maxlength="255"></textarea>
 
-        <label for="avatarFile" th:text="#{band.avatarUpload}">Subir foto de la banda (PNG, JPG, WEBP, GIF)</label>
-        <input id="avatarFile" type="file" name="avatarFile" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
-               style="width:100%;padding:10px;border-radius:12px;border:1px dashed rgba(212,175,55,0.45);background:rgba(15,23,42,0.65);color:#e2e8f0;">
+            <label for="avatarFile" th:text="#{band.avatarUpload}">Subir foto de la banda (PNG, JPG, WEBP, GIF)</label>
+            <input id="avatarFile" type="file" name="avatarFile" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml">
 
-        <label for="avatarUrl" th:text="#{band.avatarUrl}">O enlace de imagen (https://...)</label>
-        <input id="avatarUrl" type="text" th:field="*{avatarUrl}" maxlength="255" placeholder="https://...">
+            <label for="avatarUrl" th:text="#{band.avatarUrl}">O enlace de imagen (https://...)</label>
+            <input id="avatarUrl" type="text" th:field="*{avatarUrl}" maxlength="255" placeholder="https://...">
 
-        <div class="actions">
-            <a th:href="@{/groups}" th:text="#{common.cancel}">Cancelar</a>
-            <button type="submit" th:text="#{common.saveChanges}">Guardar cambios</button>
-        </div>
-    </form>
-</div>
+            <div class="actions" style="justify-content:space-between;margin-top:10px;">
+                <a class="btn" th:href="@{/groups}" th:text="#{common.cancel}">Cancelar</a>
+                <button type="submit" class="active" th:text="#{common.saveChanges}">Guardar cambios</button>
+            </div>
+        </form>
+    </section>
+</main>
 </body>
 </html>
-
-

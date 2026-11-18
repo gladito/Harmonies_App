@@ -381,14 +381,21 @@ class BetaFlowTests {
         mvc.perform(get("/movements").param("type","GROUP_JOIN_REQUEST").session(session)).andExpect(status().isOk());
     }
     @Test void paymentsForStudiosAndJobContractsTrackStatusReceiptsAndMovements()throws Exception{
-        // 1. Studio booking paid immediately via MERCADO_PAGO, then refunded on cancel
+        // 1. Studio booking starts in PENDING_PAYMENT without receipt until transfer/card data is provided
         var studio=studios.create(alice.getId(),"Estudio Pago",StudioType.RECORDING,"Sala","CABA","Consola",15000);
-        var booking=studios.book(bob.getId(),studio.getId(),LocalDate.now().plusDays(5).atTime(15,0).toString(),2,PaymentMethod.MERCADO_PAGO,true);
+        var booking=studios.book(bob.getId(),studio.getId(),LocalDate.now().plusDays(5).atTime(15,0).toString(),2,PaymentMethod.MERCADO_PAGO,false);
         var studioPayment=payments.findByReference(PaymentConceptType.STUDIO_BOOKING,booking.getId()).orElseThrow();
-        assertEquals(PaymentStatus.PAID,studioPayment.getStatus());
+        assertEquals(PaymentStatus.PENDING_PAYMENT,studioPayment.getStatus());
         assertEquals(30000,studioPayment.getAmount());
-        assertNotNull(studioPayment.getReceiptCode());
-        assertTrue(studioPayment.getReceiptCode().startsWith("HRM-MP-"));
+        assertNull(studioPayment.getReceiptCode());
+
+        // Attempting to complete payment without transfer reference is rejected
+        assertThrows(IllegalArgumentException.class,()->payments.completePayment(bob.getId(),studioPayment.getId(),PaymentMethod.MERCADO_PAGO,30000,"",null,null));
+
+        // Completing payment with real operation reference sets PAID and receipt code
+        payments.completePayment(bob.getId(),studioPayment.getId(),PaymentMethod.MERCADO_PAGO,30000,"98412055",null,null);
+        assertEquals(PaymentStatus.PAID,studioPayment.getStatus());
+        assertEquals("MP-98412055",studioPayment.getReceiptCode());
 
         studios.cancel(bob.getId(),booking.getId());
         assertEquals(PaymentStatus.REFUNDED,payments.findByReference(PaymentConceptType.STUDIO_BOOKING,booking.getId()).orElseThrow().getStatus());
@@ -398,7 +405,7 @@ class BetaFlowTests {
         assertEquals("PAID",studioPayHistory.get(1).getNewStatus());
         assertEquals("REFUNDED",studioPayHistory.get(2).getNewStatus());
 
-        // 2. Job contract: accepting applicant generates PENDING_PAYMENT order -> author pays via BANK_TRANSFER
+        // 2. Job contract: accepting applicant generates PENDING_PAYMENT order -> author pays via BANK_TRANSFER with operationReference
         var job=jobs.create(alice.getId(),"Sesión de cuerdas",JobType.SESSION,"Grabación","Violín","CABA",false,"$ 35.000 por sesión");
         var app=jobs.apply(charlie.getId(),job.getId(),"Disponible");
         jobs.decide(alice.getId(),app.getId(),true);
@@ -406,19 +413,123 @@ class BetaFlowTests {
         var jobPayment=payments.findByReference(PaymentConceptType.JOB_CONTRACT,app.getId()).orElseThrow();
         assertEquals(PaymentStatus.PENDING_PAYMENT,jobPayment.getStatus());
         assertEquals(35000,jobPayment.getAmount());
+        assertNull(jobPayment.getReceiptCode());
 
         var aliceSession=login(alice);
         mvc.perform(post("/payments/"+jobPayment.getId()+"/pay").session(aliceSession).with(csrf())
                 .param("paymentMethod","BANK_TRANSFER")
-                .param("amount","35000"))
+                .param("amount","35000")
+                .param("operationReference","88776655"))
             .andExpect(status().is3xxRedirection());
 
         em.flush();em.clear();
         var paidJobPayment=payments.findByReference(PaymentConceptType.JOB_CONTRACT,app.getId()).orElseThrow();
         assertEquals(PaymentStatus.PAID,paidJobPayment.getStatus());
         assertEquals(PaymentMethod.BANK_TRANSFER,paidJobPayment.getPaymentMethod());
-        assertTrue(paidJobPayment.getReceiptCode().startsWith("HRM-TR-"));
+        assertEquals("TRANSF-88776655",paidJobPayment.getReceiptCode());
 
         mvc.perform(get("/payments").session(aliceSession)).andExpect(status().isOk());
+    }
+    @Test void forgotPasswordRequiresVerifiedEmailBeforeResettingPassword()throws Exception{
+        MockHttpSession resetSession=new MockHttpSession();
+
+        // 1. Step 1 page renders
+        mvc.perform(get("/forgot-password").session(resetSession))
+            .andExpect(status().isOk())
+            .andExpect(content().string(org.hamcrest.Matchers.containsString("forgot-password/verify")));
+
+        // 2. Attempting to reset password without verifying email first is rejected
+        mvc.perform(post("/forgot-password/reset").session(resetSession).with(csrf())
+                .param("newPassword","NuevaClave99")
+                .param("confirmPassword","NuevaClave99"))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(redirectedUrl("/forgot-password"))
+            .andExpect(flash().attributeExists("forgotError"));
+
+        // 3. Unregistered email is rejected and does not unlock Step 2
+        mvc.perform(post("/forgot-password/verify").session(resetSession).with(csrf())
+                .param("email","inexistente@example.test"))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(redirectedUrl("/forgot-password"))
+            .andExpect(flash().attributeExists("forgotError"));
+        assertNull(resetSession.getAttribute("resetEmail"));
+
+        // 4. Registered email unlocks Step 2
+        mvc.perform(post("/forgot-password/verify").session(resetSession).with(csrf())
+                .param("email",alice.getEmail()))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(redirectedUrl("/forgot-password"))
+            .andExpect(flash().attributeExists("forgotSuccess"));
+        assertEquals(alice.getEmail(),resetSession.getAttribute("resetEmail"));
+
+        // 5. Mismatched or weak password in Step 2 is rejected while keeping verified email
+        mvc.perform(post("/forgot-password/reset").session(resetSession).with(csrf())
+                .param("newPassword","NuevaClave99")
+                .param("confirmPassword","OtraClave99"))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(redirectedUrl("/forgot-password"))
+            .andExpect(flash().attributeExists("forgotError"));
+        assertEquals(alice.getEmail(),resetSession.getAttribute("resetEmail"));
+
+        // 6. Valid new password updates account and allows logging in with the new password
+        mvc.perform(post("/forgot-password/reset").session(resetSession).with(csrf())
+                .param("newPassword","NuevaClave99")
+                .param("confirmPassword","NuevaClave99"))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(redirectedUrl("/login"))
+            .andExpect(flash().attributeExists("loginSuccess"));
+        assertNull(resetSession.getAttribute("resetEmail"));
+
+        mvc.perform(post("/login").with(csrf())
+                .param("email",alice.getEmail())
+                .param("password","NuevaClave99"))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(redirectedUrl("/home"));
+    }
+    @Test void passwordIsPhysicallySplitAcrossUsersAndUserPasswordPartsTables(){
+        em.flush();em.clear();
+        var u=users.findById(alice.getId()).orElseThrow();
+        String part1=u.getPasswordPart1();
+        String part2=u.getPasswordPart2();
+
+        assertNotNull(part1);
+        assertNotNull(part2);
+        assertEquals(30,part1.length());
+        assertEquals(30,part2.length());
+
+        // Neither part alone is a valid BCrypt hash for Harmony123
+        assertFalse(encoder.matches("Harmony123",part1));
+        assertFalse(encoder.matches("Harmony123",part2));
+
+        // Combined across the 2 tables (users + user_password_parts), the password matches
+        assertEquals(part1+part2,u.getPassword());
+        assertTrue(encoder.matches("Harmony123",u.getPassword()));
+        assertNotNull(u.getPasswordPart().getKeySalt());
+    }
+    @Test void userFollowUnfollowAndFollowingFeedFilterWork()throws Exception{
+        posts.createPost(alice.getId(),postForm());
+        posts.createPost(charlie.getId(),postForm());
+
+        // Self-follow rejected
+        assertThrows(IllegalArgumentException.class,()->community.follow(bob.getId(),bob.getId(),true));
+
+        // Bob follows Alice via HTTP endpoint
+        var bobSession=login(bob);
+        mvc.perform(post("/people/"+alice.getId()+"/follow").session(bobSession).with(csrf())
+                .param("following","true"))
+            .andExpect(status().is3xxRedirection());
+
+        var summary=community.followSummary(alice.getId(),bob.getId());
+        assertEquals(1,summary.followersCount());
+        assertTrue(summary.followedByMe());
+
+        // Feed filtered by following shows only Alice's post to Bob
+        var followingFeed=posts.feed(bob.getId(),0,"",true);
+        assertEquals(1,followingFeed.posts().size());
+        assertEquals(alice.getId(),followingFeed.posts().get(0).getAuthorId());
+
+        // Blocking removes follow relationship
+        community.block(alice.getId(),bob.getId(),true);
+        assertFalse(community.following(bob.getId(),alice.getId()));
     }
 }

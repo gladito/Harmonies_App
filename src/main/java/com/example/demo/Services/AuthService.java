@@ -143,6 +143,36 @@ public class AuthService {
         return userRepository.findByIdAndDeletedFalse(userId);
     }
 
+    @Transactional(readOnly = true)
+    public User verifyEmailForPasswordReset(String email) {
+        if (email == null || email.isBlank()) {
+            throw new IllegalArgumentException("Debes ingresar el email asociado a tu cuenta.");
+        }
+        User user = userRepository.findByEmailAndDeletedFalse(email.trim())
+                .orElseThrow(() -> new IllegalArgumentException("No encontramos ninguna cuenta asociada a ese email."));
+        if (!user.isEnabled()) {
+            throw new IllegalStateException("La cuenta asociada a ese email está deshabilitada.");
+        }
+        return user;
+    }
+
+    @Transactional
+    public User resetPasswordByVerifiedEmail(String verifiedEmail, String newPassword, String confirmPassword) {
+        if (verifiedEmail == null || verifiedEmail.isBlank()) {
+            throw new IllegalStateException("Primero debes verificar el email de tu cuenta.");
+        }
+        User user = verifyEmailForPasswordReset(verifiedEmail);
+        if (newPassword == null || newPassword.isBlank()) {
+            throw new IllegalArgumentException("Debes ingresar la nueva contraseña.");
+        }
+        if (confirmPassword == null || !newPassword.equals(confirmPassword)) {
+            throw new IllegalArgumentException("Las contraseñas ingresadas no coinciden.");
+        }
+        validatePasswordPolicy(newPassword);
+        user.setPassword(passwordEncoder.encode(newPassword));
+        return userRepository.save(user);
+    }
+
     private void validatePasswordPolicy(String newPassword) {
         boolean hasUppercase = newPassword.chars().anyMatch(Character::isUpperCase);
         boolean hasDigit = newPassword.chars().anyMatch(Character::isDigit);

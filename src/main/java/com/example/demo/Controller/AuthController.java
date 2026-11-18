@@ -15,6 +15,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
@@ -69,6 +70,59 @@ public class AuthController {
             return "redirect:/home";
         }
         return "login";
+    }
+
+    @GetMapping("/forgot-password")
+    public String showForgotPassword(@RequestParam(defaultValue = "false") boolean changeEmail,
+                                     HttpSession session,
+                                     Model model) {
+        if (session.getAttribute("userId") != null) {
+            return "redirect:/home";
+        }
+        if (changeEmail) {
+            session.removeAttribute("resetEmail");
+            session.removeAttribute("resetUsername");
+        }
+        model.addAttribute("verifiedEmail", session.getAttribute("resetEmail"));
+        model.addAttribute("verifiedUsername", session.getAttribute("resetUsername"));
+        return "forgot-password";
+    }
+
+    @PostMapping("/forgot-password/verify")
+    public String verifyForgotEmail(@RequestParam String email,
+                                    HttpSession session,
+                                    RedirectAttributes redirectAttributes) {
+        try {
+            User user = authService.verifyEmailForPasswordReset(email);
+            session.setAttribute("resetEmail", user.getEmail());
+            session.setAttribute("resetUsername", user.getUsername());
+            redirectAttributes.addFlashAttribute("forgotSuccess",
+                    "Email verificado para la cuenta @" + user.getUsername() + ". Ahora ingresa tu nueva contraseña.");
+        } catch (RuntimeException ex) {
+            session.removeAttribute("resetEmail");
+            session.removeAttribute("resetUsername");
+            redirectAttributes.addFlashAttribute("forgotError", ex.getMessage());
+        }
+        return "redirect:/forgot-password";
+    }
+
+    @PostMapping("/forgot-password/reset")
+    public String resetForgotPassword(@RequestParam String newPassword,
+                                      @RequestParam String confirmPassword,
+                                      HttpSession session,
+                                      RedirectAttributes redirectAttributes) {
+        String verifiedEmail = (String) session.getAttribute("resetEmail");
+        try {
+            User updated = authService.resetPasswordByVerifiedEmail(verifiedEmail, newPassword, confirmPassword);
+            session.removeAttribute("resetEmail");
+            session.removeAttribute("resetUsername");
+            redirectAttributes.addFlashAttribute("loginSuccess",
+                    "Contraseña actualizada para " + updated.getUsername() + ". Ya puedes iniciar sesión con tu nueva clave.");
+            return "redirect:/login";
+        } catch (RuntimeException ex) {
+            redirectAttributes.addFlashAttribute("forgotError", ex.getMessage());
+            return "redirect:/forgot-password";
+        }
     }
 
     @GetMapping("/register")

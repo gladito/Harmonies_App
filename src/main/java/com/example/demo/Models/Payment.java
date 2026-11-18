@@ -72,6 +72,12 @@ public class Payment extends BaseEntity {
         this.paidAt = LocalDateTime.now();
     }
 
+    public void resetToPending() {
+        this.status = PaymentStatus.PENDING_PAYMENT;
+        this.receiptCode = null;
+        this.paidAt = null;
+    }
+
     public void markAsRefunded() {
         this.status = PaymentStatus.REFUNDED;
     }

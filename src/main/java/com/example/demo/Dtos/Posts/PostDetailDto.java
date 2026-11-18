@@ -15,8 +15,44 @@ public class PostDetailDto {
     private Integer durationInSeconds;
     private String authorUsername;
     private String authorAvatarUrl;
+    private Long bandId;
+    private String bandName;
+    private String bandAvatarUrl;
+    private List<String> tags = List.of();
     private LocalDateTime createdAt;
     private List<Comment> comments;
+
+    public Long getBandId() {
+        return bandId;
+    }
+
+    public void setBandId(Long bandId) {
+        this.bandId = bandId;
+    }
+
+    public String getBandName() {
+        return bandName;
+    }
+
+    public void setBandName(String bandName) {
+        this.bandName = bandName;
+    }
+
+    public String getBandAvatarUrl() {
+        return bandAvatarUrl;
+    }
+
+    public void setBandAvatarUrl(String bandAvatarUrl) {
+        this.bandAvatarUrl = bandAvatarUrl;
+    }
+
+    public List<String> getTags() {
+        return tags;
+    }
+
+    public void setTags(List<String> tags) {
+        this.tags = tags;
+    }
 
     public String getAuthorAvatarUrl() {
         return authorAvatarUrl;

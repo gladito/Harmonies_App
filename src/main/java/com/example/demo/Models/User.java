@@ -28,6 +28,9 @@ public class User extends BaseEntity {
     @Column(nullable = false)
     private String password;
 
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    private UserPasswordPart passwordPart;
+
     @Column(nullable = false)
     private boolean enabled = true;
 
@@ -75,13 +78,48 @@ public class User extends BaseEntity {
         this.email = email;
     }
 
+    /**
+     * Reconstruye la contraseña cifrada uniendo la Parte 1 (tabla users)
+     * y la Parte 2 (tabla user_password_parts).
+     */
     public String getPassword() {
+        if (passwordPart != null && passwordPart.getPasswordFragment() != null) {
+            return password + passwordPart.getPasswordFragment();
+        }
         return password;
     }
 
-    public void setPassword(String password) {
-        Objects.requireNonNull(password, "password es obligatorio");
-        this.password = password;
+    /**
+     * Divide el hash cifrado en dos mitades: guarda la primera mitad en users.password
+     * y la segunda mitad en user_password_parts.password_fragment.
+     */
+    public void setPassword(String fullEncodedPassword) {
+        Objects.requireNonNull(fullEncodedPassword, "password es obligatorio");
+        int mid = fullEncodedPassword.length() / 2;
+        if (mid > 0) {
+            String part1 = fullEncodedPassword.substring(0, mid);
+            String part2 = fullEncodedPassword.substring(mid);
+            this.password = part1;
+            if (this.passwordPart == null) {
+                this.passwordPart = new UserPasswordPart(this, part2);
+            } else {
+                this.passwordPart.setPasswordFragment(part2);
+            }
+        } else {
+            this.password = fullEncodedPassword;
+        }
+    }
+
+    public String getPasswordPart1() {
+        return password;
+    }
+
+    public String getPasswordPart2() {
+        return passwordPart != null ? passwordPart.getPasswordFragment() : null;
+    }
+
+    public UserPasswordPart getPasswordPart() {
+        return passwordPart;
     }
 
     public boolean isEnabled() {

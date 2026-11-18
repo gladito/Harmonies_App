@@ -62,11 +62,57 @@ public class CommunityService {
         if(actor.equals(target)) throw new IllegalArgumentException("No puedes bloquearte");
         var rows=em.createQuery("from UserBlock b where b.owner.id=:a and b.target.id=:t",UserBlock.class).setParameter("a",actor).setParameter("t",target).getResultList();
         if(block && rows.isEmpty()) { UserBlock b=new UserBlock(); b.owner=a;b.target=t;em.persist(b); }
+        if(block) {
+            em.createQuery("delete from UserFollow f where (f.follower.id=:a and f.target.id=:t) or (f.follower.id=:t and f.target.id=:a)")
+                .setParameter("a",actor).setParameter("t",target).executeUpdate();
+        }
         if(!block) rows.forEach(em::remove);
     }
     public List<PublicUser> blockedUsers(Long actor) {
         return em.createQuery("select b.target from UserBlock b where b.owner.id=:a",User.class).setParameter("a",actor).getResultList().stream()
             .map(u -> new PublicUser(u.getId(),u.getUsername(),null,u.getProfile()!=null?u.getProfile().getAvatarUrl():null)).toList();
+    }
+    public boolean following(Long follower,Long target) {
+        if(follower==null || target==null) return false;
+        return em.createQuery("select count(f) from UserFollow f where f.follower.id=:f and f.target.id=:t",Long.class)
+            .setParameter("f",follower).setParameter("t",target).getSingleResult()>0;
+    }
+    public void follow(Long actor,Long target,boolean follow) {
+        User a=lockUser(actor), t=user(target);
+        if(actor.equals(target)) throw new IllegalArgumentException("No puedes seguirte a ti mismo");
+        if(!canSeeUser(actor,target) || blocked(actor,target)) throw new IllegalArgumentException("Perfil no disponible");
+        var rows=em.createQuery("from UserFollow f where f.follower.id=:a and f.target.id=:t",UserFollow.class)
+            .setParameter("a",actor).setParameter("t",target).getResultList();
+        if(follow && rows.isEmpty()) { UserFollow f=new UserFollow(); f.follower=a; f.target=t; em.persist(f); }
+        if(!follow) rows.forEach(em::remove);
+    }
+    public record FollowSummary(long followersCount,long followingCount,boolean followedByMe) {}
+    public FollowSummary followSummary(Long target,Long viewer) {
+        profile(target,viewer);
+        long followers=em.createQuery("select count(f) from UserFollow f where f.target.id=:t and f.follower.deleted=false and f.follower.enabled=true",Long.class)
+            .setParameter("t",target).getSingleResult();
+        long followingCnt=em.createQuery("select count(f) from UserFollow f where f.follower.id=:t and f.target.deleted=false and f.target.enabled=true",Long.class)
+            .setParameter("t",target).getSingleResult();
+        return new FollowSummary(followers,followingCnt,following(viewer,target));
+    }
+    public List<PublicUser> followersList(Long target,Long viewer) {
+        profile(target,viewer);
+        return em.createQuery("select f.follower from UserFollow f join fetch f.follower.profile where f.target.id=:t and f.follower.deleted=false and f.follower.enabled=true order by f.follower.username",User.class)
+            .setParameter("t",target).setMaxResults(50).getResultList().stream()
+            .filter(u -> canSeeUser(viewer,u.getId()))
+            .map(u -> new PublicUser(u.getId(),u.getUsername(),u.getProfile().getBio(),u.getProfile().getAvatarUrl())).toList();
+    }
+    public List<PublicUser> followingList(Long target,Long viewer) {
+        profile(target,viewer);
+        return em.createQuery("select f.target from UserFollow f join fetch f.target.profile where f.follower.id=:t and f.target.deleted=false and f.target.enabled=true order by f.target.username",User.class)
+            .setParameter("t",target).setMaxResults(50).getResultList().stream()
+            .filter(u -> canSeeUser(viewer,u.getId()))
+            .map(u -> new PublicUser(u.getId(),u.getUsername(),u.getProfile().getBio(),u.getProfile().getAvatarUrl())).toList();
+    }
+    public Set<Long> followedIds(Long actor) {
+        user(actor);
+        return new HashSet<>(em.createQuery("select f.target.id from UserFollow f where f.follower.id=:a",Long.class)
+            .setParameter("a",actor).getResultList());
     }
     public void rate(Long actor,Long target,int score) {
         User a=lockUser(actor), t=user(target);

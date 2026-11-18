@@ -21,10 +21,14 @@ public class PostController {
 
     private final PostService postService;
     private final CommentService commentService;
+    private final com.example.demo.Services.CommunityService communityService;
 
-    public PostController(PostService postService, CommentService commentService) {
+    public PostController(PostService postService,
+                          CommentService commentService,
+                          com.example.demo.Services.CommunityService communityService) {
         this.postService = postService;
         this.commentService = commentService;
+        this.communityService = communityService;
     }
 
     @GetMapping("/new")
@@ -136,6 +140,7 @@ public class PostController {
                     Long userId = (Long) session.getAttribute("userId");
                     boolean isOwner = detail.getAuthorId() != null && detail.getAuthorId().equals(userId);
                     model.addAttribute("isOwner", isOwner);
+                    model.addAttribute("reaction", communityService.reactions(java.util.List.of(postId), userId).get(postId));
                     return "post-detail";
                 })
                 .orElseGet(() -> {

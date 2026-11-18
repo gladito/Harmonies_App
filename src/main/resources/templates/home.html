@@ -1,7 +1,22 @@
 <!DOCTYPE html><html lang="es" th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Harmony · Comunidad</title><link rel="stylesheet" th:href="@{/css/harmony.css}"></head><body><nav th:replace="~{fragments :: nav}"></nav><main><div class="notice" role="status" th:if="${message}" th:text="${message}"></div>
 <section class="card hero"><span class="eyebrow" th:text="#{home.eyebrow}">La música empieza con una conexión</span><h1 th:text="#{home.title}">Tu próxima colaboración empieza acá.</h1><p class="muted" th:text="#{home.welcome(${username})}"></p><div class="actions"><a class="btn" th:href="@{/posts/new}" th:text="#{home.share}">Compartir música</a><a th:href="@{/groups/new}" th:text="#{home.createBand}">Crear una banda →</a></div></section>
 <p class="notice" th:if="${feedError}" th:text="${feedError}"></p><p class="notice" th:if="${postSuccess}" th:text="${postSuccess}"></p><p class="notice" th:if="${postError}" th:text="${postError}"></p>
-<div class="layout"><section><h2 th:text="#{home.latest}">Últimos sonidos</h2><form method="get" th:action="@{/home}" class="card"><label for="tag" th:text="#{tags.filter}">Filtrar por etiqueta</label><div class="actions"><input id="tag" name="tag" th:value="${tag}" maxlength="50" placeholder="jazz, bajo..." style="flex:1"><button th:text="#{tags.submit}">Filtrar</button><a th:if="${!#strings.isEmpty(tag)}" th:href="@{/home}" th:text="#{tags.clear}">Quitar filtro</a></div></form><div class="card" th:if="${#lists.isEmpty(feed)}" th:text="#{home.empty}">Todavía no hay publicaciones visibles. Compartí la primera.</div>
+<div class="layout"><section>
+<div class="actions" style="justify-content:space-between;margin-bottom:12px;">
+  <h2 style="margin:0;" th:text="#{home.latest}">Últimos sonidos</h2>
+  <div class="actions">
+    <a class="pill" th:classappend="${!onlyFollowing} ? 'active'"
+       th:href="@{/home(tag=${tag},following=false)}" th:text="#{home.feedAll}">Toda la comunidad</a>
+    <a class="pill" th:classappend="${onlyFollowing} ? 'active'"
+       th:href="@{/home(tag=${tag},following=true)}" th:text="#{home.feedFollowing}">Músicos que sigo</a>
+  </div>
+</div>
+<form method="get" th:action="@{/home}" class="card">
+  <input type="hidden" name="following" th:value="${onlyFollowing}">
+  <label for="tag" th:text="#{tags.filter}">Filtrar por etiqueta</label>
+  <div class="actions"><input id="tag" name="tag" th:value="${tag}" maxlength="50" placeholder="jazz, bajo..." style="flex:1"><button th:text="#{tags.submit}">Filtrar</button><a th:if="${!#strings.isEmpty(tag)}" th:href="@{/home(following=${onlyFollowing})}" th:text="#{tags.clear}">Quitar filtro</a></div>
+</form>
+<div class="card" th:if="${#lists.isEmpty(feed)}" th:text="#{home.empty}">Todavía no hay publicaciones visibles. Compartí la primera.</div>
 <article class="card" th:each="post : ${feed}">
   <div class="actions">
     <a th:href="@{|/people/${post.authorId}|}" class="row-avatar" style="gap:10px;text-decoration:none">
@@ -14,11 +29,11 @@
   </div>
   <h2><a th:href="@{|/posts/${post.id}|}" th:text="${post.title}"></a></h2>
   <p th:text="${post.description}"></p>
-  <div class="actions"><a class="pill" th:each="label : ${post.tags}" th:href="@{/home(tag=${label})}" th:text="${label}"></a></div>
+  <div class="actions"><a class="pill" th:each="label : ${post.tags}" th:href="@{/home(tag=${label},following=${onlyFollowing})}" th:text="${label}"></a></div>
   <audio controls preload="none" th:src="${post.audioUrl}" th:text="#{audio.unsupported}">Tu navegador no puede reproducir este audio.</audio>
   <form class="actions" th:action="@{|/posts/${post.id}/reaction|}" method="post"><button name="value" value="1" th:classappend="${reactions[post.id].mine == 1} ? 'active'" th:text="#{reaction.likes(${reactions[post.id].likes})}"></button><button name="value" value="-1" th:classappend="${reactions[post.id].mine == -1} ? 'active'" th:text="#{reaction.dislikes(${reactions[post.id].dislikes})}"></button><button th:if="${reactions[post.id].mine != 0}" name="value" value="0" th:text="#{reaction.remove}">Retirar</button><a th:href="@{|/posts/${post.id}|}" th:text="#{home.comments}">Comentarios →</a></form>
 </article>
-<div class="actions"><a class="btn" th:if="${page > 0}" th:href="@{/home(page=${page - 1},tag=${tag})}" th:text="#{page.previous}">← Anterior</a><span class="muted" th:text="#{page.number(${page + 1})}"></span><a class="btn" th:if="${hasMore}" th:href="@{/home(page=${page + 1},tag=${tag})}" th:text="#{page.next}">Siguiente →</a></div></section>
+<div class="actions"><a class="btn" th:if="${page > 0}" th:href="@{/home(page=${page - 1},tag=${tag},following=${onlyFollowing})}" th:text="#{page.previous}">← Anterior</a><span class="muted" th:text="#{page.number(${page + 1})}"></span><a class="btn" th:if="${hasMore}" th:href="@{/home(page=${page + 1},tag=${tag},following=${onlyFollowing})}" th:text="#{page.next}">Siguiente →</a></div></section>
 <aside><h2 th:text="#{home.yourBands}">Tus bandas</h2>
 <article class="card row-avatar" th:each="g : ${groups}">
   <a th:href="@{|/bands/${g.id}|}">

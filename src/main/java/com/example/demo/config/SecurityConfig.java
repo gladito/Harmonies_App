@@ -16,7 +16,7 @@ public class SecurityConfig {
             .orElseThrow(() -> new UsernameNotFoundException("Credenciales inválidas"));
     }
     @Bean public SecurityFilterChain securityFilterChain(HttpSecurity http, UserRepository users) throws Exception {
-        http.authorizeHttpRequests(a -> a.requestMatchers("/", "/login", "/register", "/css/**", "/js/**", "/images/**", "/avatars/**", "/error").permitAll().anyRequest().authenticated())
+        http.authorizeHttpRequests(a -> a.requestMatchers("/", "/login", "/register", "/forgot-password", "/forgot-password/**", "/css/**", "/js/**", "/images/**", "/avatars/**", "/error").permitAll().anyRequest().authenticated())
             .formLogin(f -> f.loginPage("/login").usernameParameter("email").failureUrl("/login?error")
                 .successHandler((req,res,auth) -> {
                     var u = users.findByEmailAndDeletedFalse(auth.getName()).orElseThrow();

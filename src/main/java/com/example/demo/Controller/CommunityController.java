@@ -47,8 +47,12 @@ public class CommunityController {
 
     @GetMapping("/people")
     public String people(HttpSession s, Model m) {
-        m.addAttribute("people", c.people(actor(s)));
-        m.addAttribute("blocked", c.blockedUsers(actor(s)));
+        Long me = actor(s);
+        m.addAttribute("people", c.people(me));
+        m.addAttribute("blocked", c.blockedUsers(me));
+        m.addAttribute("followedIds", c.followedIds(me));
+        m.addAttribute("followingUsers", c.followingList(me, me));
+        m.addAttribute("me", me);
         return "people";
     }
 
@@ -59,12 +63,28 @@ public class CommunityController {
 
     @GetMapping("/people/{id}")
     public String profile(@PathVariable Long id, HttpSession s, Model m) {
-        m.addAttribute("person", c.profile(id, actor(s)));
-        m.addAttribute("rating", c.rating(id, actor(s)));
-        m.addAttribute("posts", c.profilePosts(id, actor(s)));
-        m.addAttribute("mine", id.equals(actor(s)));
-        m.addAttribute("blockedByMe", c.blocked(actor(s), id));
+        Long me = actor(s);
+        m.addAttribute("person", c.profile(id, me));
+        m.addAttribute("rating", c.rating(id, me));
+        m.addAttribute("follow", c.followSummary(id, me));
+        m.addAttribute("followers", c.followersList(id, me));
+        m.addAttribute("followingList", c.followingList(id, me));
+        m.addAttribute("posts", c.profilePosts(id, me));
+        m.addAttribute("mine", id.equals(me));
+        m.addAttribute("blockedByMe", c.blocked(me, id));
         return "public-profile";
+    }
+
+    @PostMapping("/people/{id}/follow")
+    public String follow(@PathVariable Long id,
+                         @RequestParam boolean following,
+                         @RequestParam(defaultValue = "") String back,
+                         HttpSession s) {
+        c.follow(actor(s), id, following);
+        if ("people".equalsIgnoreCase(back)) {
+            return "redirect:/people";
+        }
+        return "redirect:/people/" + id;
     }
 
     @PostMapping("/profile/bio")

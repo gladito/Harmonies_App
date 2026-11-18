@@ -2,182 +2,69 @@
 <html lang="es" th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title th:text="#{profile.title}">Harmony | Mi perfil</title>
-    <style>
-        body {
-            margin: 0;
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background: radial-gradient(circle at top, #22d3ee 0%, #0f172a 55%, #020617 100%);
-            color: #e2e8f0;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 40px 16px;
-        }
-
-        .card {
-            width: 100%;
-            max-width: 600px;
-            background: rgba(15, 23, 42, 0.9);
-            border-radius: 24px;
-            padding: 36px;
-            border: 1px solid rgba(148, 163, 184, 0.18);
-            box-shadow: 0 30px 60px rgba(15, 23, 42, 0.6);
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
-        }
-
-        .card h1 {
-            margin: 0;
-            font-size: 30px;
-        }
-
-        .section {
-            background: rgba(15, 23, 42, 0.65);
-            border-radius: 18px;
-            padding: 24px;
-            border: 1px solid rgba(148, 163, 184, 0.12);
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-
-        label {
-            font-weight: 600;
-            color: rgba(226, 232, 240, 0.85);
-        }
-
-        input[type="text"],
-        input[type="password"] {
-            width: 100%;
-            padding: 12px 14px;
-            border-radius: 12px;
-            border: 1px solid rgba(148, 163, 184, 0.25);
-            background: rgba(15, 23, 42, 0.65);
-            color: #e2e8f0;
-            font-size: 15px;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-
-        input:focus {
-            outline: none;
-            border-color: rgba(99, 102, 241, 0.6);
-            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.25);
-        }
-
-        button {
-            border: none;
-            border-radius: 12px;
-            background: linear-gradient(135deg, #6366f1, #22d3ee);
-            color: #020617;
-            font-weight: 700;
-            font-size: 16px;
-            padding: 12px 20px;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 18px 36px rgba(99, 102, 241, 0.35);
-        }
-
-        .alerts {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .alert {
-            padding: 12px 16px;
-            border-radius: 12px;
-            font-size: 14px;
-        }
-
-        .alert.success {
-            background: rgba(22, 163, 74, 0.2);
-            color: #bbf7d0;
-            border: 1px solid rgba(22, 163, 74, 0.35);
-        }
-
-        .alert.error {
-            background: rgba(248, 113, 113, 0.18);
-            color: #fecaca;
-            border: 1px solid rgba(248, 113, 113, 0.3);
-        }
-
-        .back-link {
-            text-decoration: none;
-            color: #93c5fd;
-            font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-    </style>
-<style>:root{color-scheme:dark}body{background:#080808!important;color:#f8f8ff!important}h1,h2,h3{color:#d4af37!important}a{color:#d4af37!important}.card,.container,.post-card,.comments-card{border-color:#8b7324!important}button{background:#d4af37!important;color:#080808!important}</style></head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="#{profile.title}">Harmony · Mi perfil</title>
+    <link rel="stylesheet" th:href="@{/css/harmony.css}">
+</head>
 <body>
-<div class="card">
-    <a th:href="@{/home}" class="back-link" th:text="#{common.backToHomeArrow}">← Volver al inicio</a>
-    <h1 th:text="#{profile.heading}">Mi perfil</h1>
-    <div class="alerts">
-        <div th:if="${profileSuccess}" class="alert success" th:text="${profileSuccess}">Nombre actualizado.</div>
-        <div th:if="${profileError}" class="alert error" th:text="${profileError}">Error</div>
-        <div th:if="${passwordSuccess}" class="alert success" th:text="${passwordSuccess}">Contraseña actualizada.</div>
-        <div th:if="${passwordError}" class="alert error" th:text="${passwordError}">Error</div>
-    </div>
+<nav th:replace="~{fragments :: nav}"></nav>
+<main style="max-width:740px;">
+    <div class="notice" role="status" th:if="${profileSuccess}" th:text="${profileSuccess}"></div>
+    <div class="notice" role="alert" th:if="${profileError}" th:text="${profileError}"></div>
+    <div class="notice" role="status" th:if="${passwordSuccess}" th:text="${passwordSuccess}"></div>
+    <div class="notice" role="alert" th:if="${passwordError}" th:text="${passwordError}"></div>
 
-    <section class="section">
-        <h2 style="margin:0;" th:text="#{profile.avatarHeading}">Foto de perfil</h2>
-        <div style="display:flex;align-items:center;gap:16px;">
-            <img th:if="${!#strings.isEmpty(avatarUrl)}" th:src="${avatarUrl}" th:alt="${session.username}"
-                 style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:2px solid #d4af37;">
-            <span th:if="${#strings.isEmpty(avatarUrl)}"
-                  th:text="${session.username != null ? #strings.substring(session.username,0,1).toUpperCase() : 'U'}"
-                  style="display:inline-grid;place-items:center;width:72px;height:72px;border-radius:50%;border:2px solid #d4af37;color:#d4af37;font:700 28px Georgia,serif;background:#17140a;"></span>
-            <span th:text="${session.username}" style="font-size:18px;font-weight:600;"></span>
+    <section class="card hero">
+        <div class="hero-header">
+            <img class="avatar-img avatar-lg" th:if="${!#strings.isEmpty(avatarUrl)}" th:src="${avatarUrl}" th:alt="${session.username}">
+            <span class="avatar avatar-lg" th:if="${#strings.isEmpty(avatarUrl)}"
+                  th:text="${session.username != null ? #strings.substring(session.username,0,1).toUpperCase() : 'U'}"></span>
+            <div class="hero-header-info">
+                <span class="eyebrow" th:text="#{profile.eyebrow}">Perfil de músico</span>
+                <h1 th:text="#{profile.heading}">Mi perfil</h1>
+                <p class="muted" th:text="${session.username}"></p>
+            </div>
         </div>
-        <form th:action="@{/profile/avatar}" method="post" enctype="multipart/form-data" style="display:flex;flex-direction:column;gap:12px;">
+    </section>
+
+    <section class="card">
+        <h2 style="margin-top:0;" th:text="#{profile.avatarHeading}">Foto de perfil</h2>
+        <form th:action="@{/profile/avatar}" method="post" enctype="multipart/form-data">
             <input type="hidden" name="from" value="account">
             <label for="accountAvatarFile" th:text="#{profile.avatarUpload}">Subir imagen (PNG, JPG, WEBP, GIF)</label>
-            <input id="accountAvatarFile" type="file" name="avatarFile" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
-                   style="width:100%;padding:10px;border-radius:12px;border:1px dashed rgba(212,175,55,0.45);background:rgba(15,23,42,0.65);color:#e2e8f0;">
+            <input id="accountAvatarFile" type="file" name="avatarFile" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml">
             <label for="accountAvatarUrl" th:text="#{profile.avatarUrl}">O pegar enlace de imagen (https://...)</label>
             <input id="accountAvatarUrl" type="text" name="avatarUrl" maxlength="255" th:value="${avatarUrl}" placeholder="https://...">
-            <button type="submit" th:text="#{profile.avatarSave}">Guardar foto</button>
+            <button type="submit" class="active" th:text="#{profile.avatarSave}">Guardar foto</button>
         </form>
-        <form th:if="${!#strings.isEmpty(avatarUrl)}" th:action="@{/profile/avatar}" method="post">
+        <form th:if="${!#strings.isEmpty(avatarUrl)}" th:action="@{/profile/avatar}" method="post" style="margin-top:10px;">
             <input type="hidden" name="from" value="account">
             <input type="hidden" name="remove" value="true">
-            <button type="submit" th:text="#{profile.avatarRemove}">Quitar foto actual</button>
+            <button type="submit" class="btn-danger" th:text="#{profile.avatarRemove}">Quitar foto actual</button>
         </form>
     </section>
 
-    <section class="section">
-        <h2 style="margin:0;" th:text="#{profile.updateUsername}">Actualizar nombre de usuario</h2>
+    <section class="card">
+        <h2 style="margin-top:0;" th:text="#{profile.updateUsername}">Actualizar nombre de usuario</h2>
         <form th:action="@{/profile/username}" th:object="${profileForm}" method="post">
             <label for="username" th:text="#{account.username}">Nombre de usuario</label>
-            <input id="username" type="text" th:field="*{username}" th:value="${session.username}" placeholder="Nuevo nickname" required>
-            <button type="submit" th:text="#{common.saveChanges}">Guardar cambios</button>
+            <input id="username" type="text" th:field="*{username}" th:value="${session.username}" required>
+            <button type="submit" class="active" th:text="#{common.saveChanges}">Guardar cambios</button>
         </form>
     </section>
 
-    <section class="section">
-        <h2 style="margin:0;" th:text="#{profile.changePassword}">Cambiar contraseña</h2>
+    <section class="card">
+        <h2 style="margin-top:0;" th:text="#{profile.changePassword}">Cambiar contraseña</h2>
         <form th:action="@{/profile/password}" th:object="${passwordForm}" method="post">
             <label for="currentPassword" th:text="#{account.currentPassword}">Contraseña actual</label>
             <input id="currentPassword" type="password" th:field="*{currentPassword}" placeholder="********" required>
 
             <label for="newPassword" th:text="#{account.newPassword}">Nueva contraseña</label>
-            <input id="newPassword" type="password" th:field="*{newPassword}" placeholder="Debe incluir mayúsculas y números" required>
+            <input id="newPassword" type="password" th:field="*{newPassword}" required>
 
-            <button type="submit" th:text="#{profile.updatePasswordButton}">Actualizar contraseña</button>
+            <button type="submit" class="active" th:text="#{profile.updatePasswordButton}">Actualizar contraseña</button>
         </form>
     </section>
-</div>
+</main>
 </body>
 </html>
-
-
