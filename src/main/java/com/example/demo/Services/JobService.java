@@ -139,6 +139,38 @@ public class JobService {
         }
     }
 
+    /** Permite al autor del aviso cancelar una contratación ya aceptada (anula el pago pendiente o lo reembolsa). */
+    public void cancelAcceptance(Long actor, Long applicationId) {
+        User author = community.user(actor);
+        JobApplication a = applicationId == null ? null : em.find(JobApplication.class, applicationId);
+        if (a == null) throw new IllegalArgumentException("Postulación no disponible");
+        lock(a.getJob().getId());
+        if (!a.getJob().getAuthor().getId().equals(actor)) throw new IllegalArgumentException("Solo el autor del aviso puede cancelar la contratación");
+        if (a.getStatus() != ApplicationStatus.ACCEPTED) throw new IllegalArgumentException("Solo podés cancelar una postulación aceptada");
+
+        String prev = a.getStatus().name();
+        a.setStatus(ApplicationStatus.REJECTED);
+        if (movementService != null) {
+            movementService.record(
+                    MovementEntityType.JOB_APPLICATION,
+                    a.getId(),
+                    a.getApplicant().getUsername() + " → " + a.getJob().getTitle(),
+                    prev,
+                    a.getStatus().name(),
+                    author,
+                    "Contratación cancelada por el autor del aviso"
+            );
+        }
+        if (paymentService != null) {
+            paymentService.refundOrCancelForReference(
+                    PaymentConceptType.JOB_CONTRACT,
+                    a.getId(),
+                    author,
+                    "Cancelación de contratación"
+            );
+        }
+    }
+
     public void setOpen(Long actor, Long jobId, boolean open) {
         User author = community.user(actor);
         JobPosting job = lock(jobId);

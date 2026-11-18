@@ -102,6 +102,18 @@ public class JobController {
         return "redirect:/jobs/" + id;
     }
 
+    @PostMapping("/{id}/applications/{applicationId}/cancel")
+    public String cancelAcceptance(@PathVariable Long id, @PathVariable Long applicationId,
+                                   HttpSession s, RedirectAttributes a) {
+        try {
+            jobs.cancelAcceptance(actor(s), applicationId);
+            a.addFlashAttribute("message", "Contratación cancelada y orden de pago anulada.");
+        } catch (IllegalArgumentException ex) {
+            a.addFlashAttribute("message", ex.getMessage());
+        }
+        return "redirect:/jobs/" + id;
+    }
+
     @PostMapping("/{id}/open")
     public String open(@PathVariable Long id, @RequestParam boolean open, HttpSession s, RedirectAttributes a) {
         try {

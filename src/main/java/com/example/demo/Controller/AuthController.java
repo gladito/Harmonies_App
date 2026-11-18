@@ -7,6 +7,7 @@ import com.example.demo.Dtos.Auth.ProfileUpdateRequestDto;
 import com.example.demo.Models.Group;
 import com.example.demo.Models.User;
 import com.example.demo.Services.AuthService;
+import com.example.demo.Services.StateMovementService;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.servlet.http.HttpSession;
@@ -22,12 +23,14 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class AuthController {
 
     private final AuthService authService;
+    private final StateMovementService movementService;
 
     @PersistenceContext
     private EntityManager em;
 
-    public AuthController(AuthService authService) {
+    public AuthController(AuthService authService, StateMovementService movementService) {
         this.authService = authService;
+        this.movementService = movementService;
     }
 
     @ModelAttribute("loginForm")
@@ -141,6 +144,7 @@ public class AuthController {
             redirectAttributes.addFlashAttribute("registerSuccess", "Cuenta creada para " + user.getUsername() + ". Ahora puedes iniciar sesión.");
             return "redirect:/login";
         } catch (RuntimeException ex) {
+            movementService.recordSystemError(null, "POST /register", ex.getClass().getSimpleName(), ex.getMessage());
             redirectAttributes.addFlashAttribute("registerError", ex.getMessage());
             return "redirect:/register";
         }
@@ -174,6 +178,7 @@ public class AuthController {
             session.setAttribute("username", updated.getUsername());
             redirectAttributes.addFlashAttribute("profileSuccess", "Nombre de usuario actualizado.");
         } catch (RuntimeException ex) {
+            movementService.recordSystemError(userId, "POST /profile/username", ex.getClass().getSimpleName(), ex.getMessage());
             redirectAttributes.addFlashAttribute("profileError", ex.getMessage());
         }
         return "redirect:/profile";
@@ -191,6 +196,7 @@ public class AuthController {
             authService.updatePassword(userId, passwordForm.getCurrentPassword(), passwordForm.getNewPassword());
             redirectAttributes.addFlashAttribute("passwordSuccess", "Contraseña actualizada correctamente.");
         } catch (RuntimeException ex) {
+            movementService.recordSystemError(userId, "POST /profile/password", ex.getClass().getSimpleName(), ex.getMessage());
             redirectAttributes.addFlashAttribute("passwordError", ex.getMessage());
         }
         return "redirect:/profile";

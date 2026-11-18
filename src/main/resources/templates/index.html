@@ -187,7 +187,7 @@
         <span class="eyebrow" th:text="#{index.eyebrow}">LA RED COLABORATIVA PARA MÚSICOS Y BANDAS</span>
         <h1 th:text="#{index.heroTitle}">Conectá tu sonido. Formá tu banda. Encontrá dónde tocar.</h1>
         <p class="lead" th:text="#{index.heroSubtitle}">
-            Harmony reúne en un solo ecosistema a músicos independientes, bandas, salas de ensayo, estudios de grabación y oportunidades laborales con trazabilidad completa.
+            Harmony reúne en un solo ecosistema a músicos independientes, bandas, salas de ensayo, estudios de grabación y oportunidades laborales.
         </p>
         <div class="actions" style="gap:16px;">
             <a class="btn-gold" th:href="@{/login}" th:text="#{index.ctaLogin}">Iniciar sesión →</a>
@@ -249,11 +249,6 @@
             <h3 th:text="#{index.f5.title}">Bolsa de Trabajo Musical</h3>
             <p th:text="#{index.f5.desc}">Conectá con sesiones de grabación, fechas en vivo, mezcla/postproducción, clases y búsqueda de integrantes.</p>
         </article>
-        <article class="feature-card">
-            <span class="feature-num">06 · AUDITORÍA</span>
-            <h3 th:text="#{index.f6.title}">Trazabilidad y Movimientos (state_movements)</h3>
-            <p th:text="#{index.f6.desc}">Auditoría en tiempo real que registra estado anterior, estado nuevo, fecha exacta, usuario ejecutor y motivo en cada solicitud, reserva o postulación.</p>
-        </article>
     </section>
 
     <div class="section-head" th:if="${!#lists.isEmpty(featuredBands)}">
@@ -295,7 +290,7 @@
         </div>
         <div class="arch-box">
             <strong>Calidad &amp; Testing E2E</strong>
-            <span>Playwright Java + JUnit 5 · MockMvc · Concurrencia y Trazabilidad verificada</span>
+            <span>Playwright Java + JUnit 5 · MockMvc · Concurrencia verificada</span>
         </div>
     </section>
 

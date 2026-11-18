@@ -70,11 +70,14 @@ public class BaseTest {
 
         boolean headless = Boolean.parseBoolean(System.getProperty("headless", "false"));
         double slowMo = Double.parseDouble(System.getProperty("slowMo", "1500"));
-        browser = playwright.chromium().launch(
-                new BrowserType.LaunchOptions()
-                        .setHeadless(headless)
-                        .setSlowMo(slowMo)
-        );
+        BrowserType.LaunchOptions opts = new BrowserType.LaunchOptions()
+                .setHeadless(headless)
+                .setSlowMo(slowMo);
+        try {
+            browser = playwright.chromium().launch(opts);
+        } catch (Exception ex) {
+            browser = playwright.chromium().launch(opts.setChannel("msedge"));
+        }
 
         context = browser.newContext();
         page = context.newPage();

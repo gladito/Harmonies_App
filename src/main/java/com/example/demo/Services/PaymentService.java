@@ -153,6 +153,48 @@ public class PaymentService {
         });
     }
 
+    public void cancelPendingOrder(Long actorId, Long paymentId) {
+        User actor = community.user(actorId);
+        Payment payment = paymentId == null ? null : em.find(Payment.class, paymentId, LockModeType.PESSIMISTIC_WRITE);
+        if (payment == null || payment.isDeleted()) {
+            throw new IllegalArgumentException("Orden de pago no disponible.");
+        }
+        if (!payment.getPayer().getId().equals(actorId)) {
+            throw new IllegalArgumentException("Solo el responsable de la orden puede cancelarla.");
+        }
+        if (payment.getStatus() != PaymentStatus.PENDING_PAYMENT) {
+            throw new IllegalArgumentException("Solo se pueden cancelar órdenes pendientes de pago.");
+        }
+        if (payment.getConceptType() != PaymentConceptType.JOB_CONTRACT) {
+            throw new IllegalArgumentException("Las reservas de salas se cancelan desde el detalle de la sala.");
+        }
+        JobApplication app = em.find(JobApplication.class, payment.getReferenceId());
+        if (app != null && app.getStatus() == ApplicationStatus.ACCEPTED) {
+            String prevApp = app.getStatus().name();
+            app.setStatus(ApplicationStatus.REJECTED);
+            movementService.record(
+                    MovementEntityType.JOB_APPLICATION,
+                    app.getId(),
+                    app.getApplicant().getUsername() + " → " + app.getJob().getTitle(),
+                    prevApp,
+                    app.getStatus().name(),
+                    actor,
+                    "Contratación cancelada desde órdenes de pago"
+            );
+        }
+        String prevStatus = payment.getStatus().name();
+        payment.markAsCancelled();
+        movementService.record(
+                MovementEntityType.PAYMENT,
+                payment.getId(),
+                payment.getPayer().getUsername() + " → " + payment.getRecipient().getUsername() + " ($ " + payment.getAmount() + ")",
+                prevStatus,
+                payment.getStatus().name(),
+                actor,
+                "Orden de contratación cancelada por el contratista"
+        );
+    }
+
     @Transactional(readOnly = true)
     public Optional<Payment> findByReference(PaymentConceptType conceptType, Long referenceId) {
         return em.createQuery(

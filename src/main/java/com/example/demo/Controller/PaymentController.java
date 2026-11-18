@@ -86,4 +86,21 @@ public class PaymentController {
         }
         return "redirect:/payments";
     }
+
+    @PostMapping("/{id}/cancel")
+    public String cancel(@PathVariable Long id,
+                         HttpSession s,
+                         RedirectAttributes ra) {
+        Long userId = actor(s);
+        if (userId == null) {
+            return "redirect:/login";
+        }
+        try {
+            payments.cancelPendingOrder(userId, id);
+            ra.addFlashAttribute("message", "Orden de contratación cancelada.");
+        } catch (RuntimeException ex) {
+            ra.addFlashAttribute("message", ex.getMessage());
+        }
+        return "redirect:/payments";
+    }
 }

@@ -98,6 +98,9 @@
 
                             <button type="submit" class="active" th:text="#{payments.registerPaymentBtn}">Registrar pago y guardar comprobante</button>
                         </form>
+                        <form th:action="@{|/jobs/${job.id}/applications/${a.id}/cancel|}" method="post" style="margin-top:8px">
+                            <button type="submit" th:text="#{application.cancelAcceptance}">Cancelar contratación</button>
+                        </form>
                     </div>
 
                     <p class="small muted" th:if="${appPayments[a.id] != null and appPayments[a.id].status.name() == 'PAID'}">

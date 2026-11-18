@@ -117,6 +117,51 @@ public class DataSeeder implements CommandLineRunner {
                 userRepository.save(u);
             }
         }
+        seedAdminRoleAndSampleErrors();
+    }
+
+    private void seedAdminRoleAndSampleErrors() {
+        User gladito = demoUser("gladito");
+        if (gladito != null) {
+            var roles = em.createQuery("select r from Role r where r.name = 'ADMIN'", Role.class).getResultList();
+            Role adminRole;
+            if (roles.isEmpty()) {
+                adminRole = new Role("ADMIN");
+                em.persist(adminRole);
+            } else {
+                adminRole = roles.get(0);
+            }
+            if (gladito.getRoles().stream().noneMatch(r -> "ADMIN".equalsIgnoreCase(r.getName()))) {
+                gladito.addRole(adminRole);
+                em.merge(gladito);
+            }
+        }
+        long errCount = em.createQuery("select count(m) from StateMovement m where m.entityType = :t", Long.class)
+                .setParameter("t", MovementEntityType.SYSTEM_ERROR)
+                .getSingleResult();
+        if (errCount == 0) {
+            User pepito = demoUser("pepito");
+            User rodrigo = demoUser("rodrigopaz");
+            User elena = demoUser("elenavarela");
+            if (pepito != null) {
+                movementService.record(MovementEntityType.SYSTEM_ERROR, pepito.getId(), "POST /studios/1/book",
+                        "IllegalArgumentException", "ERROR", pepito,
+                        "Conflicto de horario: Ese horario ya está reservado en La Sala Dorada.");
+                movementService.record(MovementEntityType.SYSTEM_ERROR, pepito.getId(), "POST /bands/1/avatar",
+                        "IllegalArgumentException", "ERROR", pepito,
+                        "Permiso denegado: Solo el dueño puede cambiar la foto de la banda.");
+            }
+            if (rodrigo != null) {
+                movementService.record(MovementEntityType.SYSTEM_ERROR, rodrigo.getId(), "POST /studios/1/book",
+                        "IllegalArgumentException", "ERROR", rodrigo,
+                        "Regla de negocio: No podés reservar tu propia sala.");
+            }
+            if (elena != null) {
+                movementService.record(MovementEntityType.SYSTEM_ERROR, elena.getId(), "POST /profile/password",
+                        "IllegalArgumentException", "ERROR", elena,
+                        "Validación de seguridad: La contraseña debe tener entre 8 y 72 caracteres, al menos una mayúscula y un número.");
+            }
+        }
     }
 
     private void seedSamplePayments() {
